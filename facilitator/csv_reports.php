@@ -144,6 +144,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
                         }
                     }
                 }
+                
+                // Backup meetings
+                $getMeetingsQuery = "SELECT id FROM meetings WHERE incident_report_id = ?";
+                $stmt = $connection->prepare($getMeetingsQuery);
+                $stmt->bind_param("s", $reportId);
+                $stmt->execute();
+                $meetingsResult = $stmt->get_result();
+                
+                while ($meeting = $meetingsResult->fetch_assoc()) {
+                    $checkQuery = "SELECT id FROM backup_meetings WHERE id = ?";
+                    $checkStmt = $connection->prepare($checkQuery);
+                    $checkStmt->bind_param("i", $meeting['id']);
+                    $checkStmt->execute();
+                    $checkResult = $checkStmt->get_result();
+                    
+                    if ($checkResult->num_rows == 0) {
+                        $backupMeetingQuery = "INSERT INTO backup_meetings SELECT * FROM meetings WHERE id = ?";
+                        $stmt = $connection->prepare($backupMeetingQuery);
+                        $stmt->bind_param("i", $meeting['id']);
+                        if (!$stmt->execute()) {
+                            error_log("Error backing up meeting {$meeting['id']}: " . $connection->error);
+                        }
+                    }
+                }
             }
             
             // Identify students with ALL reports settled or referred (no pending cases)
@@ -354,7 +378,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
                 // Delete from original tables if archive was successful
                 if ($archiveSuccess) {
                     try {
-                        // Delete witnesses first
+                        // Delete meetings first (only from original table, not archived)
+                        $deleteMeetingsQuery = "DELETE FROM meetings WHERE incident_report_id = ?";
+                        $stmt = $connection->prepare($deleteMeetingsQuery);
+                        $stmt->bind_param("s", $reportId);
+                        $stmt->execute();
+                        
+                        // Delete witnesses
                         $deleteWitnessesQuery = "DELETE FROM incident_witnesses WHERE incident_report_id = ?";
                         $stmt = $connection->prepare($deleteWitnessesQuery);
                         $stmt->bind_param("s", $reportId);
@@ -390,14 +420,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
                 if ($errorCount > 0) {
                     $message .= "$errorCount reports failed to archive. ";
                 }
-                $message .= "$graduatedCount students were marked as Graduated. All data was backed up.";
+                $message .= "$graduatedCount students were marked as Graduated. All data was backed up (including meetings).";
                 $_SESSION['success'] = $message;
                 header("Location: archive_reports.php?alert=success");
             } else if ($graduatedCount > 0) {
-                $_SESSION['info'] = "$graduatedCount students were marked as Graduated but no reports were archived. All data was backed up.";
+                $_SESSION['info'] = "$graduatedCount students were marked as Graduated but no reports were archived. All data was backed up (including meetings).";
                 header("Location: archive_reports.php?alert=info");
             } else {
-                $_SESSION['info'] = "No students met the criteria for graduation (all reports settled/referred). No reports were archived. All data was backed up.";
+                $_SESSION['info'] = "No students met the criteria for graduation (all reports settled/referred). No reports were archived. All data was backed up (including meetings).";
                 header("Location: archive_reports.php?alert=info");
             }
             

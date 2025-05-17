@@ -46,7 +46,7 @@ if($page < 1) $page = 1;
 $offset = ($page - 1) * $records_per_page;
 
 // Build conditions
-$conditions = ["ir.status IN ('Settled', 'Referred')"];  // Start with the base condition
+$conditions = ["ir.status IN ('Settled')"];  // Start with the base condition
 $params = [];
 $param_types = "";
 

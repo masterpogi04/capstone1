@@ -20,17 +20,34 @@ function generateIncidentReportId($connection) {
     $nextYear = $academicYear + 1;
     $academicYearShort = substr($academicYear, 2) . '-' . substr($nextYear, 2);
 
-    $query = "SELECT MAX(CAST(SUBSTRING_INDEX(id, '-', -1) AS UNSIGNED)) as max_seq 
-              FROM incident_reports 
-              WHERE id LIKE 'CEIT-{$academicYearShort}-%'";
-    $result = $connection->query($query);
-    if (!$result) {
-        die("Error in sequence query: " . $connection->error);
-    }
-    $row = $result->fetch_assoc();
-    $nextSeq = ($row['max_seq'] ?? 0) + 1;
+    // Generate cryptographically secure random 8-digit number
+    $maxAttempts = 5; // Safety limit for recursion
+    return attemptGenerateId($connection, $academicYearShort, $maxAttempts);
+}
 
-    return sprintf("CEIT-%s-%04d", $academicYearShort, $nextSeq);
+function attemptGenerateId($connection, $academicYearShort, $attemptsLeft) {
+    if ($attemptsLeft <= 0) {
+        throw new Exception("Failed to generate unique ID after multiple attempts");
+    }
+
+    // Generate 8-digit random number (00000000 to 99999999)
+    $randomNumber = str_pad(random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
+
+    $id = "CEIT-{$academicYearShort}-{$randomNumber}";
+
+    // Check for duplicates
+    $query = "SELECT id FROM incident_reports WHERE id = ?";
+    $stmt = $connection->prepare($query);
+    $stmt->bind_param("s", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        // Extremely rare case - try again
+        return attemptGenerateId($connection, $academicYearShort, $attemptsLeft - 1);
+    }
+
+    return $id;
 }
 
 // Fetch reporter's name

@@ -20,17 +20,19 @@ function generateIncidentReportId($connection) {
     $nextYear = $academicYear + 1;
     $academicYearShort = substr($academicYear, 2) . '-' . substr($nextYear, 2);
 
-    $query = "SELECT MAX(CAST(SUBSTRING_INDEX(id, '-', -1) AS UNSIGNED)) as max_seq 
-              FROM incident_reports 
-              WHERE id LIKE 'CEIT-{$academicYearShort}-%'";
-    $result = $connection->query($query);
-    if (!$result) {
-        die("Error in sequence query: " . $connection->error);
-    }
-    $row = $result->fetch_assoc();
-    $nextSeq = ($row['max_seq'] ?? 0) + 1;
+    // Generate a random 5-digit number
+    $randomNumber = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
 
-    return sprintf("CEIT-%s-%04d", $academicYearShort, $nextSeq);
+    // Check if this random ID already exists (very unlikely but possible)
+    $query = "SELECT id FROM incident_reports WHERE id = 'CEIT-{$academicYearShort}-{$randomNumber}'";
+    $result = $connection->query($query);
+    
+    // If it exists, generate a new one (extremely rare case)
+    if ($result && $result->num_rows > 0) {
+        return generateIncidentReportId($connection); // Recursive call to generate new random
+    }
+
+    return sprintf("CEIT-%s-%05d", $academicYearShort, $randomNumber);
 }
 
 // Fetch reporter's name
