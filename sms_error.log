@@ -1,0 +1,77 @@
+[01-May-2025 07:02:44 Europe/Berlin] SMS Notification Request - Phone: 09318762469
+[01-May-2025 07:02:44 Europe/Berlin] Attempting to send SMS to: 09318762469
+[01-May-2025 07:02:44 Europe/Berlin] Formatted phone number: +639318762469
+[01-May-2025 07:02:45 Europe/Berlin] Twilio Exception: 21612 - [HTTP 400] Unable to create record: Message cannot be sent with the current combination of 'To' (+63931876XXXX) and/or 'From' (+15343448224) parameters
+[01-May-2025 07:02:45 Europe/Berlin] SMS Exception: SMS sending failed: [HTTP 400] Unable to create record: Message cannot be sent with the current combination of 'To' (+63931876XXXX) and/or 'From' (+15343448224) parameters
+[01-May-2025 07:03:26 Europe/Berlin] SMS Notification Request - Phone: 09318762469
+[01-May-2025 07:03:26 Europe/Berlin] Attempting to send SMS to: 09318762469
+[01-May-2025 07:03:26 Europe/Berlin] Formatted phone number: +639318762469
+[01-May-2025 07:03:28 Europe/Berlin] Twilio Exception: 21612 - [HTTP 400] Unable to create record: Message cannot be sent with the current combination of 'To' (+63931876XXXX) and/or 'From' (+15343448224) parameters
+[01-May-2025 07:03:28 Europe/Berlin] SMS Exception: SMS sending failed: [HTTP 400] Unable to create record: Message cannot be sent with the current combination of 'To' (+63931876XXXX) and/or 'From' (+15343448224) parameters
+[01-May-2025 07:09:40 Europe/Berlin] SMS Notification Request - Phone: 09318762469
+[01-May-2025 07:09:40 Europe/Berlin] sendSMS called with number: 09318762469
+[01-May-2025 07:09:40 Europe/Berlin] Cleaned number: 09318762469
+[01-May-2025 07:09:40 Europe/Berlin] Original: 09318762469, Formatted: +639318762469
+[01-May-2025 07:09:40 Europe/Berlin] Attempting to send with original number format first...
+[01-May-2025 07:09:42 Europe/Berlin] Failed with original number: [HTTP 400] Unable to create record: Invalid 'To' Phone Number: 0931876XXXX
+[01-May-2025 07:09:42 Europe/Berlin] Trying with formatted number instead: +639318762469
+[01-May-2025 07:09:43 Europe/Berlin] Twilio REST Exception: 21612 - [HTTP 400] Unable to create record: Message cannot be sent with the current combination of 'To' (+63931876XXXX) and/or 'From' (+15343448224) parameters
+[01-May-2025 07:09:43 Europe/Berlin] SMS Exception: The 'From' number +15343448224 is not a valid, SMS-capable Twilio number
+[01-May-2025 07:09:48 Europe/Berlin] SMS Notification Request - Phone: 09318762469
+[01-May-2025 07:09:48 Europe/Berlin] sendSMS called with number: 09318762469
+[01-May-2025 07:09:48 Europe/Berlin] Cleaned number: 09318762469
+[01-May-2025 07:09:48 Europe/Berlin] Original: 09318762469, Formatted: +639318762469
+[01-May-2025 07:09:48 Europe/Berlin] Attempting to send with original number format first...
+[01-May-2025 07:09:49 Europe/Berlin] Failed with original number: [HTTP 400] Unable to create record: Invalid 'To' Phone Number: 0931876XXXX
+[01-May-2025 07:09:49 Europe/Berlin] Trying with formatted number instead: +639318762469
+[01-May-2025 07:09:50 Europe/Berlin] Twilio REST Exception: 21612 - [HTTP 400] Unable to create record: Message cannot be sent with the current combination of 'To' (+63931876XXXX) and/or 'From' (+15343448224) parameters
+[01-May-2025 07:09:50 Europe/Berlin] SMS Exception: The 'From' number +15343448224 is not a valid, SMS-capable Twilio number
+[01-May-2025 07:40:23 Europe/Berlin] SMS Notification Request - Phone: 09318762469
+[01-May-2025 07:40:23 Europe/Berlin] sendSMS called with number: 09318762469
+[01-May-2025 07:40:23 Europe/Berlin] Original: 09318762469, Formatted: 639318762469
+[01-May-2025 07:40:24 Europe/Berlin] SMS API Response: Array
+(
+    [status] => 500
+    [message] => Invalid Token
+)
+
+[01-May-2025 07:40:24 Europe/Berlin] Exception in sendSMS: SMS API Error: Invalid Token
+[01-May-2025 07:40:24 Europe/Berlin] SMS Exception: SMS sending failed: SMS API Error: Invalid Token
+[01-May-2025 07:58:35 Europe/Berlin] SMS Notification Request - Phone: 09318762469
+[01-May-2025 07:58:35 Europe/Berlin] sendSMS called with number: 09318762469
+[01-May-2025 07:58:36 Europe/Berlin] SMS API Response: Array
+(
+    [status] => 200
+    [message] => Your SMS message has been successfully added to the queue and will be processed shortly.
+    [message_id] => iSms-wj9JBO
+)
+
+[01-May-2025 08:08:33 Europe/Berlin] SMS Notification Request - Phone: 09335195256
+[01-May-2025 08:08:33 Europe/Berlin] sendSMS called with number: 09335195256
+[01-May-2025 08:08:34 Europe/Berlin] SMS API Response: Array
+(
+    [status] => 200
+    [message] => Your SMS message has been successfully added to the queue and will be processed shortly.
+    [message_id] => iSms-CIC1Bs
+)
+
+[01-May-2025 08:15:49 Europe/Berlin] SMS Notification Request - Phone: 09335195256
+[01-May-2025 08:15:49 Europe/Berlin] sendSMS called with number: 09335195256
+[01-May-2025 08:15:50 Europe/Berlin] SMS API Response: Array
+(
+    [status] => 200
+    [message] => Your SMS message has been successfully added to the queue and will be processed shortly.
+    [message_id] => iSms-bTvpAF
+)
+
+[01-May-2025 08:23:32 Europe/Berlin] Meeting notification error: Invalid notification type: witness
+[01-May-2025 08:23:49 Europe/Berlin] Meeting notification error: Invalid notification type: witness
+[01-May-2025 08:24:10 Europe/Berlin] SMS Notification Request - Phone: 09318762469
+[01-May-2025 08:24:10 Europe/Berlin] sendSMS called with number: 09318762469
+[01-May-2025 08:24:11 Europe/Berlin] SMS API Response: Array
+(
+    [status] => 200
+    [message] => Your SMS message has been successfully added to the queue and will be processed shortly.
+    [message_id] => iSms-5sSEl3
+)
+

@@ -1,0 +1,231 @@
+* Global Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: #2d3748;
+    line-height: 1.6;
+}
+
+.header {
+    background-color: #ff9042;
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+    text-align: center;
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 600;
+}
+.container {
+    background-color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+/* Progress Bar */
+.progress {
+    height: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+    background-color: #e2e8f0;
+}
+
+.progress-bar {
+    background: linear-gradient(135deg, #1a6e47 0%, #2c8a5f 100%);
+    transition: width 0.3s ease;
+}
+
+/* Form Elements */
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-section h5 {
+    color: #1a6e47;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #1a6e47;
+}
+
+.form-control {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 8px;
+    transition: border-color 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: #1a6e47;
+    box-shadow: 0 0 0 2px rgba(26, 110, 71, 0.2);
+}
+
+.form-control:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+/* Custom Checkboxes and Radios */
+.custom-control-input:checked ~ .custom-control-label::before {
+    background-color: #1a6e47;
+    border-color: #1a6e47;
+}
+
+.custom-control-label {
+    cursor: pointer;
+}
+/* Back Button*/
+.modern-back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #2EDAA8;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 8px rgba(46, 218, 168, 0.15);
+    letter-spacing: 0.3px;
+}
+
+.modern-back-button:hover {
+    background-color: #28C498;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 12px rgba(46, 218, 168, 0.25);
+    color: white;
+    text-decoration: none;
+}
+
+.modern-back-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(46, 218, 168, 0.15);
+}
+
+.modern-back-button i {
+    font-size: 0.9rem;
+    position: relative;
+    top: 1px;
+}
+
+
+/* Buttons */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: #1a6e47;
+    border-color: #1a6e47;
+}
+
+.btn-primary:hover {
+    background-color: #145536;
+    border-color: #145536;
+}
+
+.btn-secondary {
+    background-color: #718096;
+    border-color: #718096;
+}
+
+.btn-secondary:hover {
+    background-color: #4a5568;
+    border-color: #4a5568;
+}
+
+.btn-navigation {
+    min-width: 120px;
+}
+
+/* Tables */
+.table {
+    margin-bottom: 2rem;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    color: #1a6e47;
+    font-weight: 600;
+    border-bottom: 2px solid #1a6e47;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Alerts and Messages */
+.alert {
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.alert-info {
+    background-color: #ebf8ff;
+    border-color: #63b3ed;
+    color: #2c5282;
+}
+
+/* Signature Canvas */
+#signatureCanvas {
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .header h1 {
+        font-size: 1.5rem;
+    }
+
+    .btn-navigation {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-row {
+        margin-right: -0.5rem;
+        margin-left: -0.5rem;
+    }
+
+    .form-group {
+        padding-right: 0.5rem;
+        padding-left: 0.5rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .btn-navigation, 
+    .progress {
+        display: none;
+    }
+
+    .container {
+        box-shadow: none;
+    }
+
+    body {
+        background-color: white;
+    }
+}

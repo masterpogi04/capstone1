@@ -1,0 +1,13 @@
+{
+  "require": {
+    "setasign/fpdf": "^1.8",
+    "dompdf/dompdf": "^3.0",
+    "phpmailer/phpmailer": "^6.9",
+    "twilio/sdk": "^8.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "setasign\\Fpdf\\": "vendor/setasign/fpdf/"
+    }
+  }
+}

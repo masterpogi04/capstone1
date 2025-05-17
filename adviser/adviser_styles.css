@@ -1,0 +1,278 @@
+/* admin styles */
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Ensure body fills the viewport */
+   
+}
+
+.logoutbtn {
+    color: white; 
+    border: none; 
+    padding: 10px; 
+    margin-top: 20px; 
+    margin-left: 0px;
+    cursor: pointer;
+}
+
+.main-content {
+    margin-left: 250px; /* This should match the width of your sidebar */
+    padding: 15px;
+    padding-top: 60px; /* Increased to account for fixed header */
+    padding-bottom: 50px; /* Extra padding to prevent overlap with the footer */
+    flex: 1;
+    margin-bottom: 0; /* Ensure no margin-bottom */
+    display: flex; /* Add flex for better layout handling */
+    flex-direction: column; /* Ensure main-content flows in a column */
+}
+
+
+Certainly! Here's an improved version of the CSS design for the dashboard:
+cssCopybody {
+    background-color: #f8f9fa;
+    font-family: 'Arial', sans-serif;
+}
+.dashboard-container {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-top: 5px;
+}
+
+.dashboard-title {
+    color: #474f57;
+    font-weight: 600;
+}
+
+.card {
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.card-header {
+    border-bottom: none;
+}
+
+.card-title {
+    color: #495057;
+    font-weight: 600;
+    
+}
+
+.table th {
+    font-weight: 600;
+    color: #495057;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+
+.analytics-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.user-count {
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px;
+    flex: 1 1 calc(25% - 20px);
+    box-sizing: border-box;
+    text-align: center;
+
+}
+
+.user-count:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 30px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+    .user-count {
+        flex: 1 1 calc(50% - 20px);
+    }
+}
+
+@media (max-width: 480px) {
+    .user-count {
+        flex: 1 1 100%;
+    }
+}
+
+
+.navbar {
+    margin-bottom: 20px;
+    background-color: orange;
+}
+
+.table {
+    margin-top: 20px;
+}
+
+.btn {
+    margin-right: 5px;
+}
+
+.update-form {
+    display: none;
+}
+
+.content {
+    padding: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    color: black;
+}
+
+td.actions {
+    white-space: nowrap;
+}
+
+button {
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.view_button {
+    background-color: white; 
+    color: black; 
+    border: 2px solid #04AA6D;
+}
+
+.view_button:hover {
+    background-color: #04AA6D;
+    color: white;
+}
+
+.edit_button {
+    background-color: white; 
+    color: black; 
+    border: 2px solid gray;
+}
+
+.edit_button:hover {
+    background-color: gray;
+    color: white;
+}
+
+button.delete-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+}
+
+button.delete-btn:hover {
+    background-color: #cc0000;
+}
+
+button.update-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+}
+
+button.update-btn:hover {
+    background-color: #45a049;
+}
+
+.update-form {
+    display: none;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+}
+
+.update-form input {
+    margin-bottom: 5px;
+}
+
+.delete-btn {
+    margin-right: 10px;
+}
+
+.filter-form {
+    margin-bottom: 20px;
+    color: white;
+}
+
+.filter-form select, .filter-form button {
+    padding: 5px 10px;
+    margin-right: 10px;
+}
+
+.table-whitetext {
+    color: white;
+}
+
+    /* Custom styling for the select element */
+    select#user_type {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        appearance: none;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    select#user_type:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    select#user_type option {
+        font-weight: normal;
+    }
+
+    select#user_type:disabled {
+        background-color: #e9ecef;
+        opacity: 1;
+    }

@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Your platform description">
+    <meta name="theme-color" content="#0d693e">
+    <title>Welcome to Our Platform</title>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* Global Responsive Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Base mobile-first approach */
+        html {
+            font-size: 14px;
+        }
+
+        /* Enhanced Navbar Styles */
+        .navbar {
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-size: 1.75rem !important;
+            font-weight: 700 !important;
+            color: #0d693e !important;
+            transition: color 0.3s ease;
+        }
+
+        .navbar-brand:hover {
+            color: #004d4d !important;
+        }
+
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 16px;
+            }
+        }
+
+        /* Container responsive padding */
+        .container {
+            padding-right: 15px;
+            padding-left: 15px;
+            width: 100%;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+        @media (max-width: 575.98px) {
+            .container {
+                max-width: 100%;
+                padding-right: 10px;
+                padding-left: 10px;
+            }
+            .navbar-brand {
+                font-size: 1.25rem !important;
+            }
+            .navbar-brand span {
+                font-size: 0.9rem !important;
+            }
+        }
+
+        @media (min-width: 576px) {
+            .container {
+                max-width: 540px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                max-width: 720px;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .container {
+                max-width: 960px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .container {
+                max-width: 1140px;
+            }
+        }
+
+        /* Responsive typography */
+        h1.display-4 {
+            font-size: 2.5rem;
+        }
+
+        @media (min-width: 768px) {
+            h1.display-4 {
+                font-size: 3.5rem;
+            }
+        }
+
+        .lead {
+            font-size: 1.1rem;
+        }
+
+        @media (min-width: 768px) {
+            .lead {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* Responsive spacing */
+        @media (max-width: 767.98px) {
+            .hero-section {
+                padding: 60px 0;
+            }
+
+            section {
+                padding: 40px 0;
+            }
+        }
+
+        /* Responsive navigation */
+        @media (max-width: 991.98px) {
+            .navbar-nav {
+                padding: 1rem 0;
+            }
+            
+            .nav-item {
+                margin: 0.5rem 0;
+            }
+
+            .navbar .btn {
+                width: 100%;
+                margin: 0.5rem 0;
+            }
+        }
+
+        /* Improved Card Spacing */
+        /* For mobile views */
+        @media (max-width: 767.98px) {
+            .card-spacing {
+                margin-bottom: 20px;
+            }
+            
+            .about-card {
+                margin-bottom: 25px;
+            }
+            
+            /* Add gap between cards in mobile view */
+            .row.card-row {
+                row-gap: 20px;
+            }
+        }
+
+        /* For desktop views */
+        @media (min-width: 768px) {
+            .row.card-row {
+                column-gap: 15px;
+                margin-left: -7.5px;
+                margin-right: -7.5px;
+            }
+            
+            .row.card-row > div {
+                padding-left: 7.5px;
+                padding-right: 7.5px;
+            }
+            
+            /* Adjust column widths to accommodate gaps */
+            .card-column {
+                flex: 0 0 auto;
+                width: 32%;
+            }
+        }
+
+        /* Responsive images */
+        .img-fluid {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Responsive footer */
+        @media (max-width: 991.98px) {
+            .footer {
+                text-align: center;
+            }
+            
+            .footer .col-lg-4 {
+                margin-bottom: 2rem;
+            }
+        }
+
+        /* Hero Section with Background Image - LIGHTER OVERLAY */
+        .hero-section {
+            position: relative;
+            padding: 120px 0;
+            color: white;
+            text-align: center;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('cvsuu.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.5; 
+            z-index: -2;
+        }
+        
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 10; 
+            background: linear-gradient(135deg, rgba(13, 105, 62, 0.65) 0%, rgba(0, 77, 77, 0.7) 100%);
+            z-index: -1;
+        }
+        
+        /* Add text shadow to ensure readability with lighter overlay */
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-content h1, 
+        .hero-content p {
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Enhanced Card Animations */
+        .feature-card {
+            border-radius: 15px;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: white;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #0d693e, #004d4d);
+            top: 0;
+            left: 0;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: #0d693e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            transition: all 0.5s ease;
+        }
+        
+        .feature-card:hover .feature-icon {
+            transform: rotate(360deg) scale(1.1);
+            background: #004d4d;
+        }
+        
+        .about-section {
+            background: #f8fafc;
+            padding: 80px 0;
+        }
+
+        /* Enhanced About Card Animations */
+        .about-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            height: 100%;
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .about-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #0d693e, #004d4d);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.4s ease;
+        }
+
+        .about-card:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        .about-card h4 {
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        .about-card:hover h4 {
+            color: #0d693e;
+            transform: translateY(-2px);
+        }
+
+        /* Enhanced Button Animations */
+        .btn-primary {
+            background: #0d693e;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .btn-primary:hover {
+            background: #004d4d;
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 12px 20px rgba(13, 105, 62, 0.3);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(-100%);
+            transition: all 0.4s ease;
+            z-index: -1;
+        }
+
+        .btn-primary:hover::before {
+            transform: translateX(0);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0) scale(0.95);
+        }
+
+        .btn-light {
+            background: white;
+            color: #0d693e;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .btn-light:hover {
+            background: #f8f9fa;
+            color: #004d4d;
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 12px 20px rgba(13, 105, 62, 0.2);
+        }
+
+        .btn-light::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.05);
+            transform: translateX(-100%);
+            transition: all 0.4s ease;
+            z-index: -1;
+        }
+
+        .btn-light:hover::before {
+            transform: translateX(0);
+        }
+
+        .btn-light:active {
+            transform: translateY(0) scale(0.95);
+        }
+
+        /* Button pulse animation */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(13, 105, 62, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 15px rgba(13, 105, 62, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(13, 105, 62, 0);
+            }
+        }
+
+        .btn-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .testimonial-card {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .footer {
+            background: #004d4d;
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        /* Media query for extra small devices */
+        @media (max-width: 575.98px) {
+            .hero-section {
+                padding: 50px 0;
+            }
+            
+            h1.display-4 {
+                font-size: 2rem;
+            }
+            
+            .navbar-brand img {
+                width: 40px !important;
+                height: 40px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Enhanced Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white">
+        <div class="container">
+            <div class="navbar-logo">
+                <a class="navbar-brand d-flex align-items-center" href="welcome_page.html">
+                    <img src="CVSU_LOGO.png" alt="CavSU Logo" class="me-3" style="width: 50px; height: 50px;">
+                    <span>CAVITE STATE UNIVERSITY</span>
+                </a>
+            </div>
+            <a></a>
+            <span class="h5">CEIT Guidance Office</span>
+        </div>
+    </nav>
+
+    <!-- Hero Section with Background Image and Lighter Overlay -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8 text-center">
+                        <h1 class="display-4 fw-bold mb-4 animate__animated animate__fadeInDown">Welcome to CEIT Guidance Office</h1>
+                        <p class="lead mb-4 animate__animated animate__fadeIn animate__delay-1s">Supporting College of Engineering and Information Technology in their academic journey, career development, and personal growth.</p>
+                        <a href="login.php" class="btn btn-light btn-lg animate__animated animate__bounceIn animate__delay-2s btn-pulse">Get Started</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+     <!-- About Us Section with added spacing -->
+     <section class="about-section">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">About Us</h2>
+                <p class="text-muted">Your Partner in Academic and Professional Success</p>
+            </div>
+            <!-- Added card-row class for proper spacing -->
+            <div class="row card-row justify-content-center">
+                <!-- Added card-column class for desktop gap -->
+                <div class="col-md-4 card-column card-spacing">
+                    <div class="about-card">
+                        <h4 class="mb-3">CvSU Mission</h4>
+                        <p>Cavite State University shall provide excellent, equitable and relevant educational opportunities in the arts, sciences and technology through quality instruction and responsive research and development activities. It shall produce professional, skilled and morally upright individuals for global competitiveness.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 card-column card-spacing">
+                    <div class="about-card">
+                        <h4 class="mb-3">CvSU Vision</h4>
+                        <p>The premier university in historic Cavite globally recognized for excellence in character development, academics, research, innovation and sustainable community engagement.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 card-column card-spacing">
+                    <div class="about-card">
+                        <h4 class="mb-3">Quality Policy</h4>
+                        <p>We <b>C</b>ommit to the highest standards of education, <b>v</b>alue our stakeholders, <b>S</b>trive for continual improvement of our products and services, and <b>U</b>phold the University's tenets of Truth, Excellence, and Service to produce globally competitive and morally upright individuals.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Added Feature Section with cards -->
+    <section class="py-5 bg-white">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Our Services</h2>
+                <p class="text-muted">Supporting Your Academic Journey</p>
+            </div>
+            <!-- Added card-row class for proper spacing -->
+            <div class="row card-row justify-content-center">
+                <div class="col-md-4 card-column card-spacing">
+                    <div class="feature-card p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h4 class="mb-3 text-center">Academic Counseling</h4>
+                        <p>Get personalized guidance on course selection, academic planning, and strategies for academic success.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 card-column card-spacing">
+                    <div class="feature-card p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h4 class="mb-3 text-center">Personal Counseling</h4>
+                        <p>Receive support for personal challenges, stress management, and developing coping strategies.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 card-column card-spacing">
+                    <div class="feature-card p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <h4 class="mb-3 text-center">Career Guidance</h4>
+                        <p>Explore career options, develop job search skills, and prepare for your professional future.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h2 class="fw-bold mb-4">Ready to Get Started?</h2>
+                    <p class="lead text-muted mb-4">Join our community of users and experience the difference today.</p>
+                    <a href="login.php" class="btn btn-primary btn-lg px-5 btn-pulse">Login Now</a>
+                    <p class="mt-3">
+                        <small class="text-muted">Don't have an account? <a href="student_registration.php" class="text-primary">Sign up here</a></small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5 class="fw-bold mb-3">School Guidance Office</h5>
+                    <p class="text-light">Helping students achieve their full potential through comprehensive guidance and support.</p>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <h5 class="fw-bold mb-3">Contact Us</h5>
+                    <p class="text-light">
+                        Email: guidance@school.edu<br>
+                        Phone: (555) 123-4567<br>
+                        Room: 203, Main Building
+                    </p>
+                </div>
+                <div class="col-lg-4 mb-4">
+                    <h5 class="fw-bold mb-3">Office Hours</h5>
+                    <p class="text-light">
+                        Monday - Thursday <br>
+                        8:00 AM - 4:00 PM
+                    </p>
+                </div>
+            </div>
+            <hr class="my-4 bg-light">
+            <div class="text-center text-light">
+                <small>&copy; 2025 School Guidance Office. All rights reserved.</small>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Animation Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Button pulse animation toggle
+            const pulseButtons = document.querySelectorAll('.btn-pulse');
+            pulseButtons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.animation = 'none';
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    this.style.animation = 'pulse 2s infinite';
+                });
+            });
+            
+            // Add responsive device detection for better handling
+            function checkDevice() {
+                const isMobile = window.matchMedia("(max-width: 767.98px)").matches;
+                const isTablet = window.matchMedia("(min-width: 768px) and (max-width: 991.98px)").matches;
+                const isDesktop = window.matchMedia("(min-width: 992px)").matches;
+                
+                document.body.classList.remove('is-mobile', 'is-tablet', 'is-desktop');
+                
+                if (isMobile) document.body.classList.add('is-mobile');
+                if (isTablet) document.body.classList.add('is-tablet');
+                if (isDesktop) document.body.classList.add('is-desktop');
+            }
+            
+            // Run on load and resize
+            checkDevice();
+            window.addEventListener('resize', checkDevice);
+        });
+    </script>
+</body>
+</html>

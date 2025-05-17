@@ -1,0 +1,16 @@
+[01-May-2025 06:49:18 Europe/Berlin] Attempting to send SMS to: 09318762469
+[01-May-2025 06:49:18 Europe/Berlin] sendSMS function called with number: 09318762469
+[01-May-2025 06:49:18 Europe/Berlin] Twilio config - SID: YOUR_ACC..., Number: YOUR_TWILIO_NUMBER
+[01-May-2025 06:49:18 Europe/Berlin] Original number: 09318762469, Cleaned number: 09318762469
+[01-May-2025 06:49:18 Europe/Berlin] Formatted phone number for Twilio: +639318762469
+[01-May-2025 06:49:18 Europe/Berlin] Attempting to send SMS via Twilio...
+[01-May-2025 06:49:19 Europe/Berlin] Twilio RestException Error: Code 20003 - [HTTP 401] Unable to create record: Authentication Error - invalid username
+[01-May-2025 06:49:19 Europe/Berlin] SMS sending exception: Authentication Error: Invalid Account SID or Auth Token
+[01-May-2025 06:56:24 Europe/Berlin] Attempting to send SMS to: 09318762469
+[01-May-2025 06:56:24 Europe/Berlin] sendSMS function called with number: 09318762469
+[01-May-2025 06:56:24 Europe/Berlin] Twilio config - SID: AC341d19..., Number: +15343448224
+[01-May-2025 06:56:24 Europe/Berlin] Original number: 09318762469, Cleaned number: 09318762469
+[01-May-2025 06:56:24 Europe/Berlin] Formatted phone number for Twilio: +639318762469
+[01-May-2025 06:56:24 Europe/Berlin] Attempting to send SMS via Twilio...
+[01-May-2025 06:56:26 Europe/Berlin] Twilio RestException Error: Code 21612 - [HTTP 400] Unable to create record: Message cannot be sent with the current combination of 'To' (+63931876XXXX) and/or 'From' (+15343448224) parameters
+[01-May-2025 06:56:26 Europe/Berlin] SMS sending exception: The 'From' phone number is not a valid, SMS-capable Twilio phone number

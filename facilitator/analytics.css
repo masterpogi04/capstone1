@@ -1,0 +1,36 @@
+.form-check-input {
+    width: 18px;
+    height: 18px;
+    margin-top: 0.25em;
+    cursor: pointer;
+}
+
+.form-check-label {
+    padding-left: 0.5em;
+    font-size: 1.1em;
+    cursor: pointer;
+}
+
+.form-check-inline {
+    align-items: center;
+    margin-right: 2rem;
+    margin-top: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.col-md-4{
+	margin-bottom: 1rem;
+}
+
+
+
+.back-btn{
+	margin-bottom: 20px;
+}
+
+.filter-controls{
+	background-color: green;
+}
+
+
+

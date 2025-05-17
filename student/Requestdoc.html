@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Document Request Form</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(to right, #0d693e, #004d4d);
+            height: 100vh;
+            font-family: serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+        .form-container {
+            background-color: #ffffff;
+            border-radius: 15px;
+            padding: 20px;
+            width: 800px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }   
+        .header {
+            background-color: #ff9f1c;
+            padding: 10px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 100%;
+            color: white;
+        }
+        .form-group label {
+            font-weight: bold;
+        }
+        .form-actions button {
+            width: 30%;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        STUDENT DOCUMENT REQUEST FORM
+    </div>
+    <div class="form-container">
+        <form method="POST" action="request_form.php">
+            <div class="form-group">
+                <label for="firstName">Student Name*</label>
+                <div class="d-flex">
+                    <input type="text" id="firstName" name="firstName" class="form-control mr-1" placeholder="First name" required>
+                    <input type="text" id="lastName" name="lastName" class="form-control" placeholder="Last name" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="studentNumber">Student Number*</label>
+                <input type="text" id="studentNumber" name="studentNumber" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="course">Course</label>
+                <select id="course" name="course" class="form-control">
+                    <option value="">Select course</option>
+                    <option value="Course A">Course A</option>
+                    <option value="Course B">Course B</option>
+                    <option value="Course C">Course C</option>
+                    <!-- Add more options as needed -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="documentRequest">Document Request*</label>
+                <input type="text" id="documentRequest" name="documentRequest" class="form-control" placeholder="Good moral and etc..." required>
+            </div>
+            <div class="form-group">
+                <label for="contactEmail">Contact Email*</label>
+                <input type="email" id="contactEmail" name="contactEmail" class="form-control" required>
+            </div>
+            <div class="form-actions d-flex justify-content-around mb-3">
+                <button type="submit" class="btn btn-success">Submit</button>
+                <button type="reset" class="btn btn-danger">Reset</button>
+                <a href="homepage_stud.html" class="btn btn-primary">Back</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

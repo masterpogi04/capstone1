@@ -1,0 +1,345 @@
+[12-Dec-2024 07:40:42 Europe/Berlin] PHP Warning:  Cannot modify header information - headers already sent by (output started at C:\xampp\htdocs\capstone1\adviser\adviser_sidebar.php:30) in C:\xampp\htdocs\capstone1\adviser\section_details.php on line 40
+[2025-02-16 10:52:34] Form submission error: Result consisted of more than one row
+Data: Array
+(
+    [POST data] => Array
+        (
+            [dateReported] => 2025-02-16 10:44:02.304175
+            [incidentPlace] => neil
+            [incidentDate] => 2025-02-16
+            [incidentTime] => 10:49
+            [place] => neil - February 16, 2025 at 10:49 AM
+            [personsInvolvedId] => Array
+                (
+                    [0] => 202105212
+                )
+
+            [personsInvolved] => Array
+                (
+                    [0] => JHANNAH BERNADETTE Q. ALBINO
+                )
+
+            [personsInvolvedYearCourse] => Array
+                (
+                    [0] => Second Year BS Agricultural and Biosystems Engineering - 2
+                )
+
+            [personsInvolvedAdviser] => Array
+                (
+                    [0] => Simeons N. Daez
+                )
+
+            [witnessType] => Array
+                (
+                    [0] => student
+                )
+
+            [witnessId] => Array
+                (
+                    [0] => 
+                )
+
+            [witnesses] => Array
+                (
+                    [0] => NEHDDHH
+                )
+
+            [witnessesYearCourse] => Array
+                (
+                    [0] => 
+                )
+
+            [witnessesAdviser] => Array
+                (
+                    [0] => 
+                )
+
+            [witnessEmail] => Array
+                (
+                    [0] => 
+                )
+
+            [description] => neillls
+            [reportedBy] => Simeons N. Daez
+        )
+
+    [Files] => Array
+        (
+            [fileUpload] => Array
+                (
+                    [name] => 
+                    [full_path] => 
+                    [type] => 
+                    [tmp_name] => 
+                    [error] => 4
+                    [size] => 0
+                )
+
+        )
+
+    [Student ID] => Array
+        (
+            [0] => 202105212
+        )
+
+)
+
+------------------------
+[2025-02-16 10:55:31] Form submission error: Result consisted of more than one row
+Data: Array
+(
+    [POST data] => Array
+        (
+            [dateReported] => 2025-02-16 10:53:00.189454
+            [incidentPlace] => neil
+            [incidentDate] => 2025-02-16
+            [incidentTime] => 10:54
+            [place] => neil - February 16, 2025 at 10:54 AM
+            [personsInvolvedId] => Array
+                (
+                    [0] => 202105212
+                )
+
+            [personsInvolved] => Array
+                (
+                    [0] => JHANNAH BERNADETTE Q. ALBINO
+                )
+
+            [personsInvolvedYearCourse] => Array
+                (
+                    [0] => Second Year BS Agricultural and Biosystems Engineering - 2
+                )
+
+            [personsInvolvedAdviser] => Array
+                (
+                    [0] => Simeons N. Daez
+                )
+
+            [witnessType] => Array
+                (
+                    [0] => student
+                )
+
+            [witnessId] => Array
+                (
+                    [0] => 273737373
+                )
+
+            [witnesses] => Array
+                (
+                    [0] => JUDE F. BAUTISTA
+                )
+
+            [witnessesYearCourse] => Array
+                (
+                    [0] => 
+                )
+
+            [witnessesAdviser] => Array
+                (
+                    [0] => 
+                )
+
+            [witnessEmail] => Array
+                (
+                    [0] => 
+                )
+
+            [description] => neilssss
+            [reportedBy] => Simeons N. Daez
+        )
+
+    [Files] => Array
+        (
+            [fileUpload] => Array
+                (
+                    [name] => 
+                    [full_path] => 
+                    [type] => 
+                    [tmp_name] => 
+                    [error] => 4
+                    [size] => 0
+                )
+
+        )
+
+    [Student ID] => Array
+        (
+            [0] => 202105212
+        )
+
+)
+
+------------------------
+[2025-02-16 10:55:47] Form submission error: Result consisted of more than one row
+Data: Array
+(
+    [POST data] => Array
+        (
+            [dateReported] => 2025-02-16 10:53:00.189454
+            [incidentPlace] => neil
+            [incidentDate] => 2025-02-16
+            [incidentTime] => 10:54
+            [place] => neil - February 16, 2025 at 10:54 AM
+            [personsInvolvedId] => Array
+                (
+                    [0] => 202105212
+                )
+
+            [personsInvolved] => Array
+                (
+                    [0] => JHANNAH BERNADETTE Q. ALBINO
+                )
+
+            [personsInvolvedYearCourse] => Array
+                (
+                    [0] => Second Year BS Agricultural and Biosystems Engineering - 2
+                )
+
+            [personsInvolvedAdviser] => Array
+                (
+                    [0] => Simeons N. Daez
+                )
+
+            [witnessType] => Array
+                (
+                    [0] => student
+                )
+
+            [witnessId] => Array
+                (
+                    [0] => 273737373
+                )
+
+            [witnesses] => Array
+                (
+                    [0] => JUDE F. BAUTISTA
+                )
+
+            [witnessesYearCourse] => Array
+                (
+                    [0] => 
+                )
+
+            [witnessesAdviser] => Array
+                (
+                    [0] => 
+                )
+
+            [witnessEmail] => Array
+                (
+                    [0] => 
+                )
+
+            [description] => neilssss
+            [reportedBy] => Simeons N. Daez
+        )
+
+    [Files] => Array
+        (
+            [fileUpload] => Array
+                (
+                    [name] => 
+                    [full_path] => 
+                    [type] => 
+                    [tmp_name] => 
+                    [error] => 4
+                    [size] => 0
+                )
+
+        )
+
+    [Student ID] => Array
+        (
+            [0] => 202105212
+        )
+
+)
+
+------------------------
+[2025-02-16 11:00:14] Form submission error: Result consisted of more than one row
+Data: Array
+(
+    [POST data] => Array
+        (
+            [dateReported] => 2025-02-16 10:53:00.189454
+            [incidentPlace] => neil
+            [incidentDate] => 2025-02-16
+            [incidentTime] => 10:54
+            [place] => neil - February 16, 2025 at 10:54 AM
+            [personsInvolvedId] => Array
+                (
+                    [0] => 202105212
+                )
+
+            [personsInvolved] => Array
+                (
+                    [0] => JHANNAH BERNADETTE Q. ALBINO
+                )
+
+            [personsInvolvedYearCourse] => Array
+                (
+                    [0] => Second Year BS Agricultural and Biosystems Engineering - 2
+                )
+
+            [personsInvolvedAdviser] => Array
+                (
+                    [0] => Simeons N. Daez
+                )
+
+            [witnessType] => Array
+                (
+                    [0] => student
+                )
+
+            [witnessId] => Array
+                (
+                    [0] => 273737373
+                )
+
+            [witnesses] => Array
+                (
+                    [0] => JUDE F. BAUTISTA
+                )
+
+            [witnessesYearCourse] => Array
+                (
+                    [0] => 
+                )
+
+            [witnessesAdviser] => Array
+                (
+                    [0] => 
+                )
+
+            [witnessEmail] => Array
+                (
+                    [0] => 
+                )
+
+            [description] => neilssss
+            [reportedBy] => Simeons N. Daez
+        )
+
+    [Files] => Array
+        (
+            [fileUpload] => Array
+                (
+                    [name] => 
+                    [full_path] => 
+                    [type] => 
+                    [tmp_name] => 
+                    [error] => 4
+                    [size] => 0
+                )
+
+        )
+
+    [Student ID] => Array
+        (
+            [0] => 202105212
+        )
+
+)
+
+------------------------

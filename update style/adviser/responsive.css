@@ -1,0 +1,214 @@
+/* Responsive Breakpoints */
+@media (max-width: 1200px) {
+    .main-content {
+        padding: 70px 15px 60px;
+    }
+}
+
+/* Large Tablets */
+@media (max-width: 992px) {
+    :root {
+        --sidebar-width: 200px;
+    }
+
+    .login-container {
+        padding: 25px;
+        gap: 30px;
+    }
+
+    .profile-image {
+        width: 100px;
+        height: 100px;
+    }
+
+    .adviser-name {
+        font-size: 16px;
+    }
+
+    .sidebar nav ul li a {
+        padding: 10px 15px;
+    }
+}
+
+/* Tablets and Mobile */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding-top: 0;
+    }
+
+    .profile-section {
+        padding: 15px;
+    }
+
+    .header {
+        width: 100%;
+        left: 0;
+        top: auto;
+        position: relative;
+        padding: 10px;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding-top: 20px;
+        min-height: calc(100vh - 120px);
+    }
+
+    .footer {
+        left: 0;
+        position: relative;
+    }
+
+    /* Login specific styles */
+    .login-container {
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .profile-img-container {
+        margin-bottom: 20px;
+    }
+
+    .login-form {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    /* Navigation adjustments */
+    .sidebar nav ul {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .sidebar nav ul li {
+        width: 50%;
+    }
+}
+
+/* Small Tablets */
+@media (max-width: 600px) {
+    .header h1 {
+        font-size: 1.5rem;
+    }
+
+    .sidebar nav ul li {
+        width: 100%;
+    }
+
+    .profile-section {
+        display: flex;
+        align-items: center;
+    }
+
+    .profile-image {
+        width: 80px;
+        height: 80px;
+        margin-right: 15px;
+    }
+
+    .adviser-name {
+        margin-top: 0;
+    }
+}
+
+/* Mobile devices */
+@media (max-width: 480px) {
+    .header {
+        padding: 8px;
+    }
+
+    .header h1 {
+        font-size: 1.2rem;
+    }
+
+    .content-wrapper {
+        padding: 10px;
+    }
+
+    .login-container {
+        padding: 15px;
+    }
+
+    .form-control {
+        padding: 8px 12px;
+    }
+
+    .profile-image {
+        width: 60px;
+        height: 60px;
+    }
+
+    .adviser-name {
+        font-size: 14px;
+    }
+
+    .sidebar nav ul li a {
+        padding: 8px 12px;
+    }
+
+    .footer {
+        padding: 10px;
+        height: auto;
+    }
+}
+
+/* Landscape Mode */
+@media (max-height: 500px) and (orientation: landscape) {
+    .sidebar {
+        height: auto;
+    }
+
+    .profile-section {
+        padding: 10px;
+    }
+
+    .profile-image {
+        width: 50px;
+        height: 50px;
+    }
+
+    .main-content {
+        padding-top: 10px;
+    }
+}
+
+/* High-contrast mode */
+@media (prefers-contrast: high) {
+    .sidebar {
+        border-right: 2px solid #000;
+    }
+
+    .header, 
+    .footer {
+        border: 2px solid #000;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .sidebar,
+    .header,
+    .footer {
+        display: none;
+    }
+
+    .main-content {
+        margin: 0;
+        padding: 0;
+    }
+}

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guidance Office Services</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+         :root {
+            --primary: #166534;
+            --secondary: #16a34a;
+            --bg-gradient: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            --header-bg: #ff9042;
+            --header-hover: #ff7d1a;
+            --button-gradient: linear-gradient(to right, #fb923c, #f97316);
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg-gradient);
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .header {
+            background: linear-gradient(to right, var(--header-bg), var(--header-hover));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .back-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            color: white;
+            background: var(--button-gradient);
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(251, 146, 60, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+
+        .service-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 1;
+        }
+
+        .service-card:hover::before {
+            opacity: 1;
+        }
+
+        .service-card .content {
+            position: relative;
+            z-index: 2;
+            transition: transform 0.4s ease;
+        }
+
+        .service-card:hover .content {
+            transform: translateY(-5px);
+        }
+
+        .service-card:hover .content * {
+            color: white !important;
+        }
+
+        .icon-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f7fafc;
+            margin-bottom: 1rem;
+            transition: all 0.4s ease;
+        }
+
+        .service-card:hover .icon-box {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .action-label {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            background: #f7fafc;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--primary);
+            margin-top: 1rem;
+            transition: all 0.4s ease;
+        }
+
+        .service-card:hover .action-label {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+    </style>
+</head>
+<body class="flex flex-col">
+    <header class="header p-6 shadow-sm">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">CEIT - Guidance Office</h1>
+            <a href="facilitator_homepage.php" class="back-link">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Home
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto py-12 px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <a href="endorse.php" class="service-card shadow-lg hover:shadow-xl">
+                <div class="content">
+                    <div class="icon-box">
+                        <i class="fas fa-user-shield text-xl text-primary"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-3">Student Violations</h2>
+                    <p class="text-gray-600 mb-4">Review and manage endorsed student violation cases with comprehensive tracking.</p>
+                    <div class="action-label">
+                        <i class="fas fa-arrow-right mr-2"></i>
+                        <span>View Records</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="Referral_sample.php" class="service-card shadow-lg hover:shadow-xl">
+                <div class="content">
+                    <div class="icon-box">
+                        <i class="fas fa-file-signature text-xl text-primary"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-3">Submit Referral</h2>
+                    <p class="text-gray-600 mb-4">Create and process new student referrals with detailed documentation.</p>
+                    <div class="action-label">
+                        <i class="fas fa-plus mr-2"></i>
+                        <span>Create New</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="view_facilitator_incident_reports.php" class="service-card shadow-lg hover:shadow-xl">
+                <div class="content">
+                    <div class="icon-box">
+                        <i class="fas fa-clipboard-list text-xl text-primary"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-3">Incident Reports</h2>
+                    <p class="text-gray-600 mb-4">Access and monitor all incident reports with status updates.</p>
+                    <div class="action-label">
+                        <i class="fas fa-search mr-2"></i>
+                        <span>View Reports</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="view_approved_reports.php" class="service-card shadow-lg hover:shadow-xl">
+                <div class="content">
+                    <div class="icon-box">
+                        <i class="fas fa-calendar-check text-xl text-primary"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-3">Meeting Reports</h2>
+                    <p class="text-gray-600 mb-4">Review reports scheduled for upcoming meetings and discussions.</p>
+                    <div class="action-label">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>Check Schedule</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="settled_incident_reports.php" class="service-card shadow-lg hover:shadow-xl">
+                <div class="content">
+                    <div class="icon-box">
+                        <i class="fas fa-check-circle text-xl text-primary"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-3">Settled Reports</h2>
+                    <p class="text-gray-600 mb-4">Access completed and resolved incident reports with outcomes.</p>
+                    <div class="action-label">
+                        <i class="fas fa-archive mr-2"></i>
+                        <span>View Archive</span>
+                    </div>
+                </div>
+            </a>
+
+            <a href="facilitator_requested_documents.php" class="service-card shadow-lg hover:shadow-xl">
+                <div class="content">
+                    <div class="icon-box">
+                        <i class="fas fa-folder-open text-xl text-primary"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-3">Requested Documents</h2>
+                    <p class="text-gray-600 mb-4">Manage and track requested documentation and materials.</p>
+                    <div class="action-label">
+                        <i class="fas fa-file-download mr-2"></i>
+                        <span>Access Files</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 py-6 mt-12">
+        <div class="container mx-auto text-center text-gray-600">
+            <p>Contact: +1234567890 | Email: guidance@cvsu.edu.ph | © 2024 CEIT Guidance Office</p>
+        </div>
+    </footer>
+</body>
+</html>

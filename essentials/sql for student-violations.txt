@@ -1,0 +1,56 @@
+-- First, drop the existing foreign key constraint
+ALTER TABLE student_violations
+DROP FOREIGN KEY student_violations_ibfk_1;
+
+-- Modify the student_id column to allow NULL values
+ALTER TABLE student_violations
+MODIFY COLUMN student_id varchar(20) NULL;
+
+-- Add the new foreign key constraint with ON DELETE SET NULL
+ALTER TABLE student_violations
+ADD CONSTRAINT student_violations_ibfk_1
+FOREIGN KEY (student_id) REFERENCES tbl_student(student_id)
+ON DELETE SET NULL;
+
+-- Now you can safely delete students and their violation records will be preserved
+-- with student_id set to NULL
+
+-- You might also want to add additional columns to preserve student information
+-- Add these columns if you want to keep student details even after deletion
+ALTER TABLE student_violations
+ADD COLUMN student_name varchar(100) NULL,
+ADD COLUMN student_course varchar(100) NULL,
+ADD COLUMN student_year_level varchar(20) NULL;
+
+-- Create a trigger to automatically populate these fields when a violation is created
+DELIMITER //
+CREATE TRIGGER before_student_violation_insert
+BEFORE INSERT ON student_violations
+FOR EACH ROW
+BEGIN
+    DECLARE student_fullname VARCHAR(100);
+    DECLARE student_course_name VARCHAR(100);
+    DECLARE student_year VARCHAR(20);
+    
+    SELECT 
+        CONCAT(ts.first_name, ' ', ts.last_name),
+        c.name,
+        s.year_level
+    INTO 
+        student_fullname,
+        student_course_name,
+        student_year
+    FROM tbl_student ts
+    LEFT JOIN sections s ON ts.section_id = s.id
+    LEFT JOIN courses c ON s.course_id = c.id
+    WHERE ts.student_id = NEW.student_id;
+    
+    SET NEW.student_name = student_fullname;
+    SET NEW.student_course = student_course_name;
+    SET NEW.student_year_level = student_year;
+END //
+DELIMITER ;
+
+
+
+mahalaga for student info sa student violations
