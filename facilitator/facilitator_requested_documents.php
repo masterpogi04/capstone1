@@ -4,7 +4,7 @@ include '../db.php';
 
 // Check if user is logged in as facilitator
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'facilitator') {
-    header("Location: ../login.php");
+    header("Location: login.php");
     exit();
 }
 
