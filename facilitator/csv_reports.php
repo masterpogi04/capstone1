@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
         $successCount = 0;
         $errorCount = 0;
         $studentNumbers = [];
+        $graduatedCount = 0;
         
         // Read student numbers from CSV
         while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
@@ -56,11 +57,96 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
         try {
             error_log("Starting archive process for " . count($studentNumbers) . " students");
             
-            // First, identify which students have ALL their reports settled
+            // First, backup all reports involving these students (regardless of status)
             $placeholders = implode(',', array_fill(0, count($studentNumbers), '?'));
             $types = str_repeat('s', count($studentNumbers));
             
-            // Get students who have ALL their reports settled
+            // Backup all reports where these students are involved as violators
+            $reportQuery = "SELECT DISTINCT ir.id 
+                          FROM incident_reports ir
+                          JOIN student_violations sv ON sv.incident_report_id = ir.id
+                          WHERE sv.student_id IN ($placeholders)";
+            
+            $stmt = $connection->prepare($reportQuery);
+            $stmt->bind_param($types, ...$studentNumbers);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $allReports = [];
+            while ($row = $result->fetch_assoc()) {
+                $allReports[] = $row['id'];
+            }
+            
+            error_log("Found " . count($allReports) . " reports involving these students");
+            
+            // Backup all reports and their related data
+            foreach ($allReports as $reportId) {
+                // Backup incident report if not already backed up
+                $checkQuery = "SELECT id FROM backup_incident_reports WHERE id = ?";
+                $checkStmt = $connection->prepare($checkQuery);
+                $checkStmt->bind_param("s", $reportId);
+                $checkStmt->execute();
+                $checkResult = $checkStmt->get_result();
+                
+                if ($checkResult->num_rows == 0) {
+                    $backupReportQuery = "INSERT INTO backup_incident_reports SELECT * FROM incident_reports WHERE id = ?";
+                    $stmt = $connection->prepare($backupReportQuery);
+                    $stmt->bind_param("s", $reportId);
+                    if (!$stmt->execute()) {
+                        error_log("Error backing up report {$reportId}: " . $connection->error);
+                    }
+                }
+                
+                // Backup student violations
+                $getViolationsQuery = "SELECT id FROM student_violations WHERE incident_report_id = ?";
+                $stmt = $connection->prepare($getViolationsQuery);
+                $stmt->bind_param("s", $reportId);
+                $stmt->execute();
+                $violationsResult = $stmt->get_result();
+                
+                while ($violation = $violationsResult->fetch_assoc()) {
+                    $checkQuery = "SELECT id FROM backup_student_violations WHERE id = ?";
+                    $checkStmt = $connection->prepare($checkQuery);
+                    $checkStmt->bind_param("s", $violation['id']);
+                    $checkStmt->execute();
+                    $checkResult = $checkStmt->get_result();
+                    
+                    if ($checkResult->num_rows == 0) {
+                        $backupViolationQuery = "INSERT INTO backup_student_violations SELECT * FROM student_violations WHERE id = ?";
+                        $stmt = $connection->prepare($backupViolationQuery);
+                        $stmt->bind_param("s", $violation['id']);
+                        if (!$stmt->execute()) {
+                            error_log("Error backing up violation {$violation['id']}: " . $connection->error);
+                        }
+                    }
+                }
+                
+                // Backup witnesses
+                $getWitnessesQuery = "SELECT id FROM incident_witnesses WHERE incident_report_id = ?";
+                $stmt = $connection->prepare($getWitnessesQuery);
+                $stmt->bind_param("s", $reportId);
+                $stmt->execute();
+                $witnessesResult = $stmt->get_result();
+                
+                while ($witness = $witnessesResult->fetch_assoc()) {
+                    $checkQuery = "SELECT id FROM backup_incident_witnesses WHERE id = ?";
+                    $checkStmt = $connection->prepare($checkQuery);
+                    $checkStmt->bind_param("s", $witness['id']);
+                    $checkStmt->execute();
+                    $checkResult = $checkStmt->get_result();
+                    
+                    if ($checkResult->num_rows == 0) {
+                        $backupWitnessQuery = "INSERT INTO backup_incident_witnesses SELECT * FROM incident_witnesses WHERE id = ?";
+                        $stmt = $connection->prepare($backupWitnessQuery);
+                        $stmt->bind_param("s", $witness['id']);
+                        if (!$stmt->execute()) {
+                            error_log("Error backing up witness {$witness['id']}: " . $connection->error);
+                        }
+                    }
+                }
+            }
+            
+            // Identify students with ALL reports settled or referred (no pending cases)
             $settledStudentsQuery = "SELECT DISTINCT sv.student_id
                                    FROM student_violations sv
                                    WHERE sv.student_id IN ($placeholders)
@@ -68,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
                                        SELECT 1 FROM student_violations sv2
                                        JOIN incident_reports ir ON sv2.incident_report_id = ir.id
                                        WHERE sv2.student_id = sv.student_id
-                                       AND ir.status != 'settled'
+                                       AND ir.status NOT IN ('settled', 'referred')
                                    )";
             
             $stmt = $connection->prepare($settledStudentsQuery);
@@ -81,12 +167,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
                 $settledStudents[] = $row['student_id'];
             }
             
-            error_log("Found " . count($settledStudents) . " students with all reports settled");
+            $graduatedCount = count($settledStudents);
+            error_log("Found " . $graduatedCount . " students with all reports settled/referred");
             
-            // Only mark students as graduated if ALL their reports are settled
-            if (!empty($settledStudents)) {
-                $placeholders = implode(',', array_fill(0, count($settledStudents), '?'));
-                $types = str_repeat('s', count($settledStudents));
+            // Only mark students as graduated if ALL their reports are settled or referred
+            if ($graduatedCount > 0) {
+                $placeholders = implode(',', array_fill(0, $graduatedCount, '?'));
+                $types = str_repeat('s', $graduatedCount);
                 
                 $updateViolationsQuery = "UPDATE student_violations 
                                          SET student_course = 'Graduated', 
@@ -99,25 +186,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
                 error_log("Marked " . $stmt->affected_rows . " violations as Graduated");
             }
             
-            // Find all reports where ALL involved students are in $settledStudents
-            // AND all violators in the report are marked as Graduated
-            // AND the report itself is settled
+            // Find reports eligible for archiving:
+            // 1. Report status is settled or referred
+            // 2. All violators are marked as Graduated
+            // 3. No involved students have any other reports that aren't settled/referred
             $archiveQuery = "SELECT DISTINCT ir.id 
                              FROM incident_reports ir
-                             WHERE ir.status = 'settled'
+                             WHERE ir.status IN ('settled', 'referred')
                              AND NOT EXISTS (
                                  SELECT 1 FROM student_violations sv 
                                  WHERE sv.incident_report_id = ir.id 
                                  AND sv.student_course != 'Graduated'
                              )
                              AND NOT EXISTS (
-                                 -- Check if any student in this report has other non-settled reports
                                  SELECT 1 FROM student_violations sv2
                                  JOIN incident_reports ir2 ON sv2.incident_report_id = ir2.id
                                  WHERE sv2.student_id IN (
                                      SELECT student_id FROM student_violations WHERE incident_report_id = ir.id
                                  )
-                                 AND ir2.status != 'settled'
+                                 AND ir2.status NOT IN ('settled', 'referred')
                              )";
             
             $stmt = $connection->prepare($archiveQuery);
@@ -131,11 +218,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
             
             error_log("Reports to archive: " . count($reportsToArchive));
             
-            // Now archive each eligible report
+            // Archive eligible reports
             foreach ($reportsToArchive as $reportId) {
                 $archiveSuccess = true;
                 
-                // Check if this report already exists in the archive
+                // Check if report already exists in archive
                 $checkQuery = "SELECT id FROM archive_incident_reports WHERE id = ?";
                 $checkStmt = $connection->prepare($checkQuery);
                 $checkStmt->bind_param("s", $reportId);
@@ -143,10 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
                 $checkResult = $checkStmt->get_result();
                 
                 if ($checkResult->num_rows > 0) {
-                    // Report already exists in archive - need to use a new ID
-                    error_log("Report {$reportId} already exists in archive, generating new ID");
-                    
-                    // Generate incremented ID
+                    // Generate new ID if report already exists in archive
                     $newId = null;
                     
                     if (preg_match('/(.*-)(\d+)$/', $reportId, $matches)) {
@@ -154,24 +238,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
                         $number = intval($matches[2]);
                         
                         for ($i = 1; $i <= 100; $i++) {
-                            $candidateNumber = $number + $i;
-                            $paddedNumber = str_pad($candidateNumber, strlen($matches[2]), '0', STR_PAD_LEFT);
-                            $candidateId = $prefix . $paddedNumber;
-                            
-                            $checkQuery = "SELECT id FROM archive_incident_reports WHERE id = ?";
-                            $checkStmt = $connection->prepare($checkQuery);
-                            $checkStmt->bind_param("s", $candidateId);
-                            $checkStmt->execute();
-                            $checkResult = $checkStmt->get_result();
-                            
-                            if ($checkResult->num_rows == 0) {
-                                $newId = $candidateId;
-                                break;
-                            }
-                        }
-                    } else {
-                        for ($i = 1; $i <= 100; $i++) {
-                            $candidateId = $reportId . "-" . $i;
+                            $candidateId = $prefix . str_pad($number + $i, strlen($matches[2]), '0', STR_PAD_LEFT);
                             
                             $checkQuery = "SELECT id FROM archive_incident_reports WHERE id = ?";
                             $checkStmt = $connection->prepare($checkQuery);
@@ -187,116 +254,98 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
                     }
                     
                     if (!$newId) {
-                        error_log("Could not generate unique ID for report {$reportId}");
                         $errorCount++;
                         continue;
                     }
                     
-                    error_log("Using new ID {$newId} for report {$reportId}");
-                    
                     // Archive with new ID
-                    $getColumnsQuery = "SHOW COLUMNS FROM incident_reports";
-                    $result = $connection->query($getColumnsQuery);
+                    $columnQuery = "SHOW COLUMNS FROM incident_reports";
+                    $result = $connection->query($columnQuery);
                     $columns = [];
                     while ($row = $result->fetch_assoc()) {
                         if ($row['Field'] !== 'id') {
                             $columns[] = $row['Field'];
                         }
                     }
-                    
                     $columnList = implode(', ', $columns);
+                    
                     $archiveReportQuery = "INSERT INTO archive_incident_reports (id, $columnList)
                                           SELECT ?, $columnList
                                           FROM incident_reports WHERE id = ?";
-                    
                     $stmt = $connection->prepare($archiveReportQuery);
                     $stmt->bind_param("ss", $newId, $reportId);
                     if (!$stmt->execute()) {
-                        error_log("Error archiving report: " . $connection->error);
                         $archiveSuccess = false;
                     }
                     
+                    // Archive violations with new report ID
                     if ($archiveSuccess) {
-                        $getColumnsQuery = "SHOW COLUMNS FROM student_violations";
-                        $result = $connection->query($getColumnsQuery);
+                        $columnQuery = "SHOW COLUMNS FROM student_violations";
+                        $result = $connection->query($columnQuery);
                         $columns = [];
                         $nonIdColumns = [];
                         while ($row = $result->fetch_assoc()) {
-                            $columns[] = $row['Field'];
                             if ($row['Field'] !== 'id' && $row['Field'] !== 'incident_report_id') {
                                 $nonIdColumns[] = $row['Field'];
                             }
                         }
-                        
                         $nonIdColumnList = implode(', ', $nonIdColumns);
+                        
                         $archiveViolationsQuery = "INSERT INTO archive_student_violations (id, incident_report_id, $nonIdColumnList)
                                                   SELECT id, ?, $nonIdColumnList
                                                   FROM student_violations WHERE incident_report_id = ?";
-                        
                         $stmt = $connection->prepare($archiveViolationsQuery);
                         $stmt->bind_param("ss", $newId, $reportId);
                         if (!$stmt->execute()) {
-                            error_log("Error archiving violations: " . $connection->error);
                             $archiveSuccess = false;
                         }
                     }
                     
+                    // Archive witnesses with new report ID
                     if ($archiveSuccess) {
-                        $getColumnsQuery = "SHOW COLUMNS FROM incident_witnesses";
-                        $result = $connection->query($getColumnsQuery);
+                        $columnQuery = "SHOW COLUMNS FROM incident_witnesses";
+                        $result = $connection->query($columnQuery);
                         $columns = [];
                         $nonIdColumns = [];
                         while ($row = $result->fetch_assoc()) {
-                            $columns[] = $row['Field'];
                             if ($row['Field'] !== 'id' && $row['Field'] !== 'incident_report_id') {
                                 $nonIdColumns[] = $row['Field'];
                             }
                         }
-                        
                         $nonIdColumnList = implode(', ', $nonIdColumns);
+                        
                         $archiveWitnessesQuery = "INSERT INTO archive_incident_witnesses (id, incident_report_id, $nonIdColumnList)
                                                  SELECT id, ?, $nonIdColumnList
                                                  FROM incident_witnesses WHERE incident_report_id = ?";
-                        
                         $stmt = $connection->prepare($archiveWitnessesQuery);
                         $stmt->bind_param("ss", $newId, $reportId);
                         if (!$stmt->execute()) {
-                            error_log("Error archiving witnesses: " . $connection->error);
                             $archiveSuccess = false;
                         }
                     }
                 } else {
-                    // No duplicate, use original ID
-                    $archiveReportQuery = "INSERT INTO archive_incident_reports 
-                                          SELECT * FROM incident_reports WHERE id = ?";
-                    
+                    // Archive with original ID
+                    $archiveReportQuery = "INSERT INTO archive_incident_reports SELECT * FROM incident_reports WHERE id = ?";
                     $stmt = $connection->prepare($archiveReportQuery);
                     $stmt->bind_param("s", $reportId);
                     if (!$stmt->execute()) {
-                        error_log("Error archiving report: " . $connection->error);
                         $archiveSuccess = false;
                     }
                     
                     if ($archiveSuccess) {
-                        $archiveViolationsQuery = "INSERT INTO archive_student_violations 
-                                                  SELECT * FROM student_violations WHERE incident_report_id = ?";
-                        
+                        $archiveViolationsQuery = "INSERT INTO archive_student_violations SELECT * FROM student_violations WHERE incident_report_id = ?";
                         $stmt = $connection->prepare($archiveViolationsQuery);
                         $stmt->bind_param("s", $reportId);
                         if (!$stmt->execute()) {
-                            error_log("Error archiving violations: " . $connection->error);
                             $archiveSuccess = false;
                         }
                     }
                     
                     if ($archiveSuccess) {
-                        $archiveWitnessesQuery = "INSERT INTO archive_incident_witnesses 
-                                                 SELECT * FROM incident_witnesses WHERE incident_report_id = ?";
-                        
+                        $archiveWitnessesQuery = "INSERT INTO archive_incident_witnesses SELECT * FROM incident_witnesses WHERE incident_report_id = ?";
                         $stmt = $connection->prepare($archiveWitnessesQuery);
                         $stmt->bind_param("s", $reportId);
                         if (!$stmt->execute()) {
-                            error_log("Error archiving witnesses: " . $connection->error);
                             $archiveSuccess = false;
                         }
                     }
@@ -305,16 +354,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
                 // Delete from original tables if archive was successful
                 if ($archiveSuccess) {
                     try {
+                        // Delete witnesses first
                         $deleteWitnessesQuery = "DELETE FROM incident_witnesses WHERE incident_report_id = ?";
                         $stmt = $connection->prepare($deleteWitnessesQuery);
                         $stmt->bind_param("s", $reportId);
                         $stmt->execute();
                         
+                        // Delete violations
                         $deleteViolationsQuery = "DELETE FROM student_violations WHERE incident_report_id = ?";
                         $stmt = $connection->prepare($deleteViolationsQuery);
                         $stmt->bind_param("s", $reportId);
                         $stmt->execute();
                         
+                        // Delete report
                         $deleteReportQuery = "DELETE FROM incident_reports WHERE id = ?";
                         $stmt = $connection->prepare($deleteReportQuery);
                         $stmt->bind_param("s", $reportId);
@@ -332,14 +384,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
             
             $connection->commit();
             
+            // Set appropriate session message based on results
             if ($successCount > 0) {
-                $_SESSION['success'] = "Successfully archived $successCount reports. $errorCount reports failed.";
+                $message = "Successfully archived $successCount reports. ";
+                if ($errorCount > 0) {
+                    $message .= "$errorCount reports failed to archive. ";
+                }
+                $message .= "$graduatedCount students were marked as Graduated. All data was backed up.";
+                $_SESSION['success'] = $message;
                 header("Location: archive_reports.php?alert=success");
-            } else if ($errorCount > 0) {
-                $_SESSION['error'] = "Failed to archive $errorCount reports.";
-                header("Location: archive_reports.php?alert=error");
+            } else if ($graduatedCount > 0) {
+                $_SESSION['info'] = "$graduatedCount students were marked as Graduated but no reports were archived. All data was backed up.";
+                header("Location: archive_reports.php?alert=info");
             } else {
-                $_SESSION['info'] = count($settledStudents) . " students had all reports settled and were marked as Graduated. No eligible reports were found for archiving.";
+                $_SESSION['info'] = "No students met the criteria for graduation (all reports settled/referred). No reports were archived. All data was backed up.";
                 header("Location: archive_reports.php?alert=info");
             }
             
@@ -359,4 +417,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csvFile'])) {
 // If not a POST request or no file uploaded
 header("Location: archive_reports.php");
 exit();
-?> 
+?>
