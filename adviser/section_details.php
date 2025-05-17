@@ -22,6 +22,28 @@ if ($section_id === 0) {
 
 if (isset($_POST['delete_student'])) {
     $student_id = intval($_POST['student_id']);
+    
+    // Check if student has unresolved violations
+    $check_violations_sql = "SELECT COUNT(*) as unresolved_count 
+                            FROM student_violations 
+                            WHERE student_id = ? 
+                            AND status NOT IN ('Settled', 'Referred')";
+    $check_violations_stmt = $connection->prepare($check_violations_sql);
+    if ($check_violations_stmt === false) {
+        die("Prepare failed: " . $connection->error);
+    }
+    $check_violations_stmt->bind_param("i", $student_id);
+    $check_violations_stmt->execute();
+    $result = $check_violations_stmt->get_result();
+    $unresolved_count = $result->fetch_assoc()['unresolved_count'];
+    $check_violations_stmt->close();
+
+    if ($unresolved_count > 0) {
+        $_SESSION['error_message'] = "Cannot delete student because they have unresolved violations (not Settled or Referred).";
+        echo "<script>window.location.href = 'section_details.php?section_id=" . $section_id . "';</script>";
+        exit();
+    }
+
     $disable_sql = "UPDATE tbl_student SET status = 'disabled' WHERE student_id = ?";
     $disable_stmt = $connection->prepare($disable_sql);
     if ($disable_stmt === false) {
@@ -32,7 +54,8 @@ if (isset($_POST['delete_student'])) {
         die("Execute failed: " . $disable_stmt->error);
     }
     $disable_stmt->close();
-    // Redirect to refresh the page
+    
+    $_SESSION['success_message'] = "Student has been successfully disabled.";
     echo "<script>window.location.href = 'section_details.php?section_id=" . $section_id . "';</script>";
     exit();
 }
@@ -480,22 +503,34 @@ $stmt->close();
 </head>
 <body>
     <?php
-if (isset($_SESSION['edit_status'])) {
-    $status = $_SESSION['edit_status'];
-    $message = $_SESSION['edit_message'];
-    unset($_SESSION['edit_status']);
-    unset($_SESSION['edit_message']);
+if (isset($_SESSION['error_message'])) {
     echo "
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             Swal.fire({
-                icon: '$status',
-                title: '" . ($status === 'success' ? 'Success!' : 'Error!') . "',
-                text: '" . addslashes($message) . "',
-                confirmButtonColor: '" . ($status === 'success' ? '#28a745' : '#dc3545') . "'
+                icon: 'error',
+                title: 'Error',
+                text: '" . addslashes($_SESSION['error_message']) . "',
+                confirmButtonColor: '#dc3545'
             });
         });
     </script>";
+    unset($_SESSION['error_message']);
+}
+
+if (isset($_SESSION['success_message'])) {
+    echo "
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: '" . addslashes($_SESSION['success_message']) . "',
+                confirmButtonColor: '#28a745'
+            });
+        });
+    </script>";
+    unset($_SESSION['success_message']);
 }
 ?>
 
@@ -832,6 +867,52 @@ window.onclick = function(event) {
         }
         table.style.display = '';
     }
+        });
+
+       $(document).on('click', '.delete-student-btn', function() {
+            const form = $(this).closest('form');
+            const studentId = form.find('input[name="student_id"]').val();
+            
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This will permanently disable the student account!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, disable it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading state
+                    Swal.fire({
+                        title: 'Processing...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    // Submit the form via AJAX
+                    $.ajax({
+                        type: 'POST',
+                        url: 'section_details.php?section_id=<?php echo $section_id; ?>',
+                        data: form.serialize(),
+                        success: function(response) {
+                            // Reload the page to see changes
+                            window.location.reload();
+                        },
+                        error: function(xhr, status, error) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Failed to disable student. Please try again.'
+                            });
+                        }
+                    });
+                }
+            });
         });
     </script>
 </body>
