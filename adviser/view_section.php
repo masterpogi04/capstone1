@@ -346,6 +346,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
         $verify_stmt->close();
 
+        // Check if any student in the section has violations that are not Settled or Referred
+        $check_violations_stmt = $connection->prepare("
+            SELECT COUNT(*) as unresolved_count 
+            FROM student_violations sv
+            JOIN tbl_student ts ON sv.student_id = ts.student_id
+            WHERE ts.section_id = ? 
+            AND ts.status = 'active'
+            AND sv.status NOT IN ('Settled', 'Referred')
+        ");
+        $check_violations_stmt->bind_param("i", $section_id);
+        $check_violations_stmt->execute();
+        $unresolved_count = $check_violations_stmt->get_result()->fetch_assoc()['unresolved_count'];
+        $check_violations_stmt->close();
+
+        if ($unresolved_count > 0) {
+            throw new Exception("Cannot delete section because there are students with unresolved violations (not Settled or Referred).");
+        }
+
         // Get count of students in the section
         $check_students_stmt = $connection->prepare("
             SELECT COUNT(*) as student_count 
@@ -370,11 +388,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         // Disable all active students in the section and clear their emails
         $update_students_stmt = $connection->prepare("
-    UPDATE tbl_student 
-    SET status = 'disabled'
-    WHERE section_id = ? 
-    AND status = 'active'");
-$update_students_stmt->bind_param("i", $section_id);
+            UPDATE tbl_student 
+            SET status = 'disabled'
+            WHERE section_id = ? 
+            AND status = 'active'");
+        $update_students_stmt->bind_param("i", $section_id);
                 
         if (!$update_students_stmt->execute()) {
             throw new Exception("Failed to update student status: " . $update_students_stmt->error);
