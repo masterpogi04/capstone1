@@ -51,6 +51,7 @@ function toggleWitnessFields(select) {
         field.style.display = 'none';
         field.value = '';
         field.required = false;
+        field.readOnly = false; // Ensure fields are not readonly
     });
     staffFields.forEach(field => {
         field.style.display = 'none';
@@ -60,6 +61,7 @@ function toggleWitnessFields(select) {
     nameField.style.display = 'none';
     nameField.value = '';
     nameField.required = false;
+    nameField.readOnly = false; // Ensure name field is not readonly initially
     
     if (select.value === "") {
         // Keep everything hidden for empty selection
@@ -68,21 +70,20 @@ function toggleWitnessFields(select) {
         studentFields.forEach(field => field.style.display = 'block');
         nameField.style.display = 'block';
         nameField.readOnly = false;
-        nameField.required = true;  // Will be set to required if ID is provided
+        nameField.required = false;  // Make witness name optional
         studentIdField.required = false;  // Student ID is optional
         $(emailField).off('blur');
     } else if (select.value === 'staff') {
         staffFields.forEach(field => {
             field.style.display = 'block';
-            field.required = true;  // Make staff email required
+            field.required = false;  // Make staff email optional
         });
         nameField.style.display = 'block';
         nameField.readOnly = false;
-        nameField.required = true;  // Make staff name required
+        nameField.required = false;  // Make staff name optional
         attachEmailListener(emailField);
     }
 }
-
 
 function addPersonInvolved() {
     var container = document.getElementById('personsInvolvedContainer');
@@ -100,8 +101,8 @@ function addPersonInvolved() {
             required 
             placeholder="Name" 
             oninput="this.value = this.value.toUpperCase();">
-        <input type="text" class="form-control mb-2 student-year-course" name="personsInvolvedYearCourse[]" placeholder="Year & Course" readonly>
-        <input type="text" class="form-control mb-2" name="personsInvolvedAdviser[]" placeholder="Registration Adviser" readonly>
+        <input type="text" class="form-control mb-2 student-year-course" name="personsInvolvedYearCourse[]" placeholder="Year & Course">
+        <input type="text" class="form-control mb-2" name="personsInvolvedAdviser[]" placeholder="Registration Adviser">
         <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeEntry(this)">
             <i class="fas fa-trash"></i> Remove
         </button>
@@ -115,7 +116,7 @@ function addWitnessField() {
     var div = document.createElement('div');
     div.className = 'witness-entry';
     div.innerHTML = `
-        <select class="form-control mb-2 witness-type" name="witnessType[]" onchange="toggleWitnessFields(this)" required>
+        <select class="form-control mb-2 witness-type" name="witnessType[]" onchange="toggleWitnessFields(this)">
             <option value="">Select Witness Type</option>
             <option value="student">Student</option>
             <option value="staff">Staff</option>
@@ -130,11 +131,10 @@ function addWitnessField() {
             class="form-control mb-2 witness-name" 
             name="witnesses[]" 
             placeholder="Name"
-            required
             style="display:none;"
             oninput="this.value = this.value.toUpperCase();">
-        <input type="text" class="form-control mb-2 student-field student-year-course" name="witnessesYearCourse[]" placeholder="Year & Course" style="display:none;" readonly>
-        <input type="text" class="form-control mb-2 student-field" name="witnessesAdviser[]" placeholder="Registration Adviser" style="display:none;" readonly>
+        <input type="text" class="form-control mb-2 student-field student-year-course" name="witnessesYearCourse[]" placeholder="Year & Course" style="display:none;">
+        <input type="text" class="form-control mb-2 student-field" name="witnessesAdviser[]" placeholder="Registration Adviser" style="display:none;">
         <input type="email" class="form-control mb-2 staff-field" name="witnessEmail[]" placeholder="Email" style="display:none;">
         <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeEntry(this)">
             <i class="fas fa-trash"></i> Remove
@@ -219,133 +219,40 @@ function setMaxDate() {
     $('#incidentDate').attr('max', today);
 }
 
-// Remove all existing form submit handlers and replace with this single one
-$(document).ready(function() {
-    setMaxDate();
-    
-    // Attach event listeners to update combined field
-    $('#incidentPlace, #incidentDate').on('change', updateCombinedField);
-    $('#incidentTime').on('change', function() {
-        if (validateTime()) {
-            updateCombinedField();
-        }
-    });
-
-    // Attach listeners to initial fields
-    attachStudentIdListener($('.student-id'));
-
-    // Single form submission handler
-    $('#incidentReportForm').off('submit').on('submit', function(e) {
-        e.preventDefault();
-        
-        if (!validateTime()) {
-            return false;
-        }
-        
-        const validation = hasValidStudent();
-        
-        if (!validation.hasAnyPerson) {
-            Swal.fire({
-                title: 'Missing Required Information',
-                text: 'At least one person must be involved in the incident report.',
-                icon: 'warning',
-                confirmButtonText: 'OK'
-            });
-            return false;
-        }
-        
-        if (!validation.hasCeitStudent) {
-            Swal.fire({
-                title: 'Missing Required Information',
-                text: 'At least one registered CEIT student must be involved in the incident report.',
-                icon: 'warning',
-                confirmButtonText: 'OK'
-            });
-            return false;
-        }
-        
-        // If all validations pass, show confirmation dialog
-        Swal.fire({
-            title: 'Confirm Submission',
-            text: 'Are you sure you want to submit this incident report?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, submit it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                var formData = new FormData(this);
-                
-                // Clear student IDs for unregistered students before submission
-                $('.person-involved-entry').each(function() {
-                    var idField = $(this).find('.student-id');
-                    var yearCourseField = $(this).find('.student-year-course');
-                    
-                    if (!yearCourseField.val() && idField.val() && idField.attr('data-unregistered') === 'true') {
-                        formData.delete(idField.attr('name'));
-                    }
-                });
-                
-                $.ajax({
-                    url: $(this).attr('action'),
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            Swal.fire(
-                                'Submitted!',
-                                response.message,
-                                'success'
-                            ).then(() => {
-                                resetForm();
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire(
-                                'Error!',
-                                response.message,
-                                'error'
-                            );
-                        }
-                    },
-                    error: function() {
-                        Swal.fire(
-                            'Error!',
-                            'An error occurred while submitting the report.',
-                            'error'
-                        );
-                    }
-                });
-            }
-        });
-    });
-});
-
+// Updated attachStudentIdListener function to handle optional witnesses
 function attachStudentIdListener(input) {
     $(input).on('blur', function() {
         var studentId = $(this).val();
         var entry = $(this).closest('.person-involved-entry, .witness-entry');
         var nameField = entry.find('.student-name, .witness-name');
+        var yearCourseField = entry.find('.student-year-course');
+        var adviserField = entry.find('[name="personsInvolvedAdviser[]"], [name="witnessesAdviser[]"]');
         var isWitness = entry.hasClass('witness-entry');
         
-        // If student ID is empty, allow manual name entry and make it non-required
+        // If student ID is empty, allow manual name entry
         if (!studentId.trim()) {
-            nameField.prop('readonly', false)
-                    .prop('required', false);
-            entry.find('.student-year-course').val('');
-            entry.find('[name="personsInvolvedAdviser[]"], [name="witnessesAdviser[]"]').val('');
+            nameField.prop('readonly', false);
+            
+            // Keep name required for persons involved, but not for witnesses
+            if (!isWitness) {
+                nameField.prop('required', true);
+            } else {
+                nameField.prop('required', false);
+            }
+            
+            yearCourseField.val('');
+            adviserField.val('');
             if (isWitness) {
                 entry.find('[name="witnessId[]"]').val('');
             }
             return;
         }
         
-        // If student ID is provided, make name field required
-        nameField.prop('required', true);
+        // If student ID is provided for a person involved, make name field required
+        // For witnesses, it remains optional
+        if (!isWitness) {
+            nameField.prop('required', true);
+        }
         
         // Check for duplicates only if student ID is not empty
         if (studentId && isStudentIdDuplicate(studentId, this)) {
@@ -357,10 +264,16 @@ function attachStudentIdListener(input) {
             });
             // Clear the ID field and related fields, keep the name
             $(this).val('');
-            entry.find('.student-year-course').val('');
-            entry.find('[name="personsInvolvedAdviser[]"], [name="witnessesAdviser[]"]').val('');
-            nameField.prop('readonly', false)
-                    .prop('required', false);
+            yearCourseField.val('');
+            adviserField.val('');
+            nameField.prop('readonly', false);
+            
+            // Only set required for persons involved
+            if (!isWitness) {
+                nameField.prop('required', true);
+            } else {
+                nameField.prop('required', false);
+            }
             return;
         }
         
@@ -372,24 +285,42 @@ function attachStudentIdListener(input) {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
+                    // Auto-fill the fields with retrieved information
                     nameField.val(response.name)
-                            .prop('readonly', true)
-                            .prop('required', true);
-                    entry.find('.student-year-course').val(response.year_course);
-                    entry.find('[name="personsInvolvedAdviser[]"], [name="witnessesAdviser[]"]').val(response.adviser);
+                            .prop('readonly', true);  // Only name field should be readonly
+                    
+                    // Only set required for persons involved
+                    if (!isWitness) {
+                        nameField.prop('required', true);
+                    } else {
+                        nameField.prop('required', false);
+                    }
+                    
+                    // Populate the year & course and adviser fields but keep them editable
+                    yearCourseField.val(response.year_course)
+                                  .prop('readonly', false);  // Make sure it's not readonly
+                    
+                    adviserField.val(response.adviser)
+                               .prop('readonly', false);  // Make sure it's not readonly
                     
                     if (isWitness) {
                         entry.find('[name="witnessId[]"]').val(studentId);
                     }
                 } else {
                     // For unregistered student IDs, keep the ID visible and allow manual name entry
-                    entry.find('.student-year-course').val('');
-                    entry.find('[name="personsInvolvedAdviser[]"], [name="witnessesAdviser[]"]').val('');
-                    nameField.prop('readonly', false)
-                            .prop('required', true);  // Make name required when ID is provided
+                    yearCourseField.val('');
+                    adviserField.val('');
+                    nameField.prop('readonly', false);
+                    
+                    // Only set required for persons involved
+                    if (!isWitness) {
+                        nameField.prop('required', true);
+                    } else {
+                        nameField.prop('required', false);
+                    }
                     
                     // Mark as unregistered
-                    $(this).attr('data-unregistered', 'true');
+                    $(input).attr('data-unregistered', 'true');
                     
                     Swal.fire({
                         title: 'Student Not Found',
@@ -406,8 +337,17 @@ function attachStudentIdListener(input) {
                     icon: 'error',
                     confirmButtonText: 'OK'
                 });
-                nameField.prop('readonly', false)
-                        .prop('required', true);  // Make name required when ID is provided
+                nameField.prop('readonly', false);
+                
+                // Only set required for persons involved
+                if (!isWitness) {
+                    nameField.prop('required', true);
+                } else {
+                    nameField.prop('required', false);
+                }
+                
+                yearCourseField.prop('readonly', false);
+                adviserField.prop('readonly', false);
             }
         });
     });
@@ -485,3 +425,142 @@ function resetForm() {
         fileInput.value = '';
     }
 }
+
+// Remove all existing form submit handlers and replace with this single one
+$(document).ready(function() {
+    setMaxDate();
+    
+    // Attach event listeners to update combined field
+    $('#incidentPlace, #incidentDate').on('change', updateCombinedField);
+    $('#incidentTime').on('change', function() {
+        if (validateTime()) {
+            updateCombinedField();
+        }
+    });
+
+    // Attach listeners to initial fields
+    attachStudentIdListener($('.student-id'));
+    
+    // Ensure all Year & Course and Adviser fields are NOT readonly on page load
+    $('.student-year-course, [name="personsInvolvedAdviser[]"], [name="witnessesAdviser[]"]').prop('readonly', false);
+
+    // Single form submission handler
+    $('#incidentReportForm').off('submit').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!validateTime()) {
+            return false;
+        }
+        
+        const validation = hasValidStudent();
+        
+        if (!validation.hasAnyPerson) {
+            Swal.fire({
+                title: 'Missing Required Information',
+                text: 'At least one person must be involved in the incident report.',
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            });
+            return false;
+        }
+        
+        if (!validation.hasCeitStudent) {
+            Swal.fire({
+                title: 'Missing Required Information',
+                text: 'At least one registered CEIT student must be involved in the incident report.',
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            });
+            return false;
+        }
+        
+        // Add validation for witnesses (optional field check)
+        let hasIncompleteWitness = false;
+        $('.witness-entry').each(function() {
+            const witnessType = $(this).find('.witness-type').val();
+            const witnessName = $(this).find('.witness-name').val();
+            
+            // If witness type is selected but name is missing
+            if (witnessType && !witnessName) {
+                hasIncompleteWitness = true;
+            }
+            
+            // For staff witnesses, check if email is missing
+            if (witnessType === 'staff') {
+                const witnessEmail = $(this).find('[name="witnessEmail[]"]').val();
+                if (!witnessEmail) {
+                    hasIncompleteWitness = true;
+                }
+            }
+        });
+        
+        if (hasIncompleteWitness) {
+            Swal.fire({
+                title: 'Incomplete Witness Information',
+                text: 'If you add a witness, please complete all their information or remove the witness entry.',
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            });
+            return false;
+        }
+        
+        // If all validations pass, show confirmation dialog
+        Swal.fire({
+            title: 'Confirm Submission',
+            text: 'Are you sure you want to submit this incident report?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, submit it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                var formData = new FormData(this);
+                
+                // Clear student IDs for unregistered students before submission
+                $('.person-involved-entry').each(function() {
+                    var idField = $(this).find('.student-id');
+                    var yearCourseField = $(this).find('.student-year-course');
+                    
+                    if (!yearCourseField.val() && idField.val() && idField.attr('data-unregistered') === 'true') {
+                        formData.delete(idField.attr('name'));
+                    }
+                });
+                
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire(
+                                'Submitted!',
+                                response.message,
+                                'success'
+                            ).then(() => {
+                                resetForm();
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                'Error!',
+                                response.message,
+                                'error'
+                            );
+                        }
+                    },
+                    error: function() {
+                        Swal.fire(
+                            'Error!',
+                            'An error occurred while submitting the report.',
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
+    });
+});

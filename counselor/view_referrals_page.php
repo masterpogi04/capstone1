@@ -20,10 +20,7 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $records_per_page;
 
 // Base query for total records - Modified to show all referrals
-$count_query = "SELECT COUNT(DISTINCT CASE 
-                    WHEN r.incident_report_id IS NOT NULL THEN r.incident_report_id 
-                    ELSE CONCAT('single_', r.id) 
-                END) as total 
+$count_query = "SELECT COUNT(*) as total 
                 FROM referrals r
                 LEFT JOIN tbl_student s ON r.student_id = s.student_id
                 LEFT JOIN sections sec ON s.section_id = sec.id
@@ -79,14 +76,12 @@ $query = "SELECT
                 WHEN r.reason_for_referral LIKE 'Violation to school rules%' THEN CONCAT('Violation: ', COALESCE(r.violation_details, ''))
                 ELSE r.reason_for_referral
             END as detailed_reason,
-            GROUP_CONCAT(
-                DISTINCT CONCAT(
-                    CONCAT(UPPER(SUBSTRING(r.first_name, 1, 1)), LOWER(SUBSTRING(r.first_name, 2))), ' ',
-                    IF(r.middle_name IS NOT NULL AND r.middle_name != '', CONCAT(UPPER(SUBSTRING(r.middle_name, 1, 1)), '. '), ''),
-                    CONCAT(UPPER(SUBSTRING(r.last_name, 1, 1)), LOWER(SUBSTRING(r.last_name, 2))),
-                    ' (',
-                    r.course_year, ')'
-                ) SEPARATOR '||'
+                        CONCAT(
+                CONCAT(UPPER(SUBSTRING(r.first_name, 1, 1)), LOWER(SUBSTRING(r.first_name, 2))), ' ',
+                IF(r.middle_name IS NOT NULL AND r.middle_name != '', CONCAT(UPPER(SUBSTRING(r.middle_name, 1, 1)), '. '), ''),
+                CONCAT(UPPER(SUBSTRING(r.last_name, 1, 1)), LOWER(SUBSTRING(r.last_name, 2))),
+                ' (',
+                r.course_year, ')'
             ) as student_info,
             MIN(r.id) as first_referral_id
           FROM referrals r
@@ -101,10 +96,7 @@ if (!empty($where_conditions)) {
 }
 
 // Group by incident_report_id or individual referral id
-$query .= " GROUP BY CASE 
-                WHEN r.incident_report_id IS NOT NULL THEN r.incident_report_id 
-                ELSE r.id 
-            END";
+$query .= " GROUP BY r.id";
 
 // Apply sorting
 if ($sort == 'date_asc') {
@@ -580,18 +572,11 @@ if ($department) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if ($result->num_rows > 0): ?>
-                        <?php while ($row = $result->fetch_assoc()): 
-                            $students = explode('|', $row['student_info']);
-                        ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($row['formatted_date']); ?></td>
-        <td> 
-            <?php 
-            $formatted_students = array_map('htmlspecialchars', $students);
-            echo implode('<br>', $formatted_students);
-            ?>
-        </td>
+                                    <?php if ($result->num_rows > 0): ?>
+                                       <?php while ($row = $result->fetch_assoc()): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($row['formatted_date']); ?></td>
+                        <td><?php echo htmlspecialchars($row['student_info']); ?></td>
 
                                 <td><?php echo htmlspecialchars($row['detailed_reason']); ?></td>
                                 <td><?php echo htmlspecialchars($row['faculty_name']); ?></td>

@@ -1,25 +1,20 @@
 <?php
 session_start();
 include '../db.php';
-
 // Ensure the user is logged in and is a facilitator
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'facilitator') {
     header("Location: ../login.php");
     exit();
 }
-
 // Check if an ID is provided
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     $_SESSION['error'] = "No report ID provided.";
     header("Location: archive_reports.php?alert=error");
     exit();
 }
-
 $reportId = $_GET['id'];
-
 // Start transaction
 $connection->begin_transaction();
-
 try {
     // Check if the report exists in the archive
     $checkQuery = "SELECT id FROM archive_incident_reports WHERE id = ?";
@@ -48,13 +43,6 @@ try {
     $deleteStmt->execute();
     $backupViolationsDeleted = $deleteStmt->affected_rows;
     
-    // Delete from backup_meetings
-    $deleteBackupMeetingsQuery = "DELETE FROM backup_meetings WHERE incident_report_id = ?";
-    $deleteStmt = $connection->prepare($deleteBackupMeetingsQuery);
-    $deleteStmt->bind_param("s", $reportId);
-    $deleteStmt->execute();
-    $backupMeetingsDeleted = $deleteStmt->affected_rows;
-    
     // Delete from backup_incident_reports
     $deleteBackupReportQuery = "DELETE FROM backup_incident_reports WHERE id = ?";
     $deleteStmt = $connection->prepare($deleteBackupReportQuery);
@@ -63,7 +51,7 @@ try {
     $backupReportDeleted = $deleteStmt->affected_rows;
     
     // Log the backup deletions
-    error_log("Deleted from backup tables: $backupReportDeleted reports, $backupViolationsDeleted violations, $backupWitnessesDeleted witnesses, $backupMeetingsDeleted meetings");
+    error_log("Deleted from backup tables: $backupReportDeleted reports, $backupViolationsDeleted violations, $backupWitnessesDeleted witnesses");
     
     // Delete from archive_incident_witnesses
     $deleteWitnessesQuery = "DELETE FROM archive_incident_witnesses WHERE incident_report_id = ?";

@@ -137,18 +137,22 @@ if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUE
             $witnesses = explode('|', $row['witnesses']);
             $total_witnesses = count(array_filter($witnesses));
             $current_count = 0;
-            
-            foreach ($witnesses as $witness) {
-                if (empty($witness)) continue;
-                
-                $current_count++;
-                $tableHTML .= formatWitnessDisplay($witness);
-                
-                if ($current_count < $total_witnesses) {
-                    $tableHTML .= ", <br><br>";
-                } else {
-                    $tableHTML .= "<br>";
+
+            if ($total_witnesses > 0) {
+                foreach ($witnesses as $witness) {
+                    if (empty($witness)) continue;
+                    
+                    $current_count++;
+                    $tableHTML .= formatWitnessDisplay($witness);
+                    
+                    if ($current_count < $total_witnesses) {
+                        $tableHTML .= ", <br><br>";
+                    } else {
+                        $tableHTML .= "<br>";
+                    }
                 }
+            } else {
+                $tableHTML .= 'No witness';
             }
             $tableHTML .= '</td>';
             

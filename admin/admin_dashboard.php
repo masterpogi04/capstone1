@@ -597,11 +597,11 @@ canvas#userChart {
                 <i class="bi bi-people-fill me-2"></i>User Analytics
             </button>
         </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="incident-reports-tab" data-bs-toggle="tab" data-bs-target="#incident-reports" type="button" role="tab" aria-controls="incident-reports" aria-selected="false">
-                <i class="bi bi-building-fill me-2"></i>Incident Reports
-            </button>
-        </li>
+         <li class="nav-item" role="presentation">
+    <a class="nav-link" href="admin_incident_reports_analytics.php">
+        <i class="bi bi-people-fill me-2"></i>Incident Report Analytics
+    </a>
+</li>
     </ul>
     
     <!-- Tab content -->
@@ -657,128 +657,7 @@ canvas#userChart {
             </div>
         </div>
         
-        <!-- Incident Reports Tab -->
-            <div class="tab-pane fade" id="incident-reports" role="tabpanel" aria-labelledby="incident-reports-tab">
-                <div class="row analytics-section">
-                    <div class="col-md-12">
-                        <div class="analytics-card">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <i class="bi bi-building-fill"></i>
-                                    Department Incident Reports
-                                </h3>
-                            </div>
-                            <div class="card-body">
-                                <!-- Date Filter Form - Now using on-change events -->
-                                <div id="reportFilterForm" class="mb-4">
-                                    <div class="row g-3 align-items-end">
-                                        <div class="col-md-2">
-                                            <label for="start_date" class="form-label">Date From</label>
-                                            <input type="date" class="form-control filter-control" id="start_date" name="start_date" 
-                                                max="<?php echo $today; ?>" value="<?php echo $start_date ?? ''; ?>">
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label for="end_date" class="form-label">Date To</label>
-                                            <input type="date" class="form-control filter-control" id="end_date" name="end_date" 
-                                                max="<?php echo $today; ?>" value="<?php echo $end_date ?? ''; ?>">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label for="department_id" class="form-label">Department</label>
-                                            <select class="form-select filter-control" id="department_id" name="department_id">
-                                                <option value="">All Departments</option>
-                                                <?php foreach ($all_departments as $dept): ?>
-                                                <option value="<?php echo $dept['id']; ?>">
-                                                    <?php echo htmlspecialchars($dept['name']); ?>
-                                                </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label for="status_filter" class="form-label">Status</label>
-                                            <select class="form-select filter-control" id="status_filter" name="status_filter">
-                                                <option value="">All Statuses</option>
-                                                <option value="Pending">Pending</option>
-                                                <option value="For Meeting">For Meeting</option>
-                                                <option value="Rescheduled">Rescheduled</option>
-                                                <option value="Settled">Settled</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <button type="button" id="resetFilters" class="btn btn-secondary w-100">
-                                                <i class="bi bi-arrow-counterclockwise me-2"></i>Reset
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Loading indicator -->
-                                <div id="loadingIndicator" class="text-center py-5" style="display: none;">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    <p class="mt-2 text-muted">Loading data...</p>
-                                </div>
-
-                                <!-- Main Content -->
-                                <div id="reportContent">
-                                    <!-- Content will be loaded via AJAX -->
-                                    <div id="departmentView">
-                                        <!-- Department Chart -->
-                                        <div class="chart-container">
-                                            <canvas id="departmentChart"></canvas>
-                                        </div>
-                                        
-                                        <!-- Department Table -->
-                                        <div class="table-responsive mt-4">
-                                            <table class="analytics-table" id="departmentTable">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Department</th>
-                                                        <th>Incident Reports</th>
-                                                        <th>Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <!-- Will be populated via AJAX -->
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                    
-                                    <div id="courseView" style="display: none;">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h4 class="mb-0">
-                                                <i class="bi bi-arrow-left-circle me-2 back-to-departments"></i>
-                                                <span id="selectedDepartmentName"></span>
-                                            </h4>
-                                            <span class="badge bg-info fs-6"><span id="departmentReportCount">0</span> Reports</span>
-                                        </div>
-                                        
-                                        <!-- Course Chart -->
-                                        <div class="chart-container">
-                                            <canvas id="courseChart"></canvas>
-                                        </div>
-                                        
-                                        <!-- Course Table -->
-                                        <div class="table-responsive mt-4">
-                                            <table class="analytics-table" id="courseTable">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Course</th>
-                                                        <th>Incident Reports</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <!-- Will be populated via AJAX -->
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        
             </div>
 </main>
     <footer class="footer">

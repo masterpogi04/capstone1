@@ -459,8 +459,7 @@ if ($selected_department) {
     let startDate = '<?php echo $start_date; ?>';
     let endDate = '<?php echo $end_date; ?>';
 
-    // Initialize chart
-    function initChart() {
+   function initChart() {
         const ctx = document.getElementById('mainChart').getContext('2d');
         if (myChart) {
             myChart.destroy();
@@ -479,6 +478,9 @@ if ($selected_department) {
             },
             options: {
                 responsive: true,
+                animation: {
+                    duration: 0 // Set animation duration to 0 to disable animations
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -523,7 +525,9 @@ if ($selected_department) {
 
             myChart.data.labels = reasons;
             myChart.data.datasets[0].data = counts;
-            myChart.update();
+            myChart.update({
+                duration: 0 // Disable animation for updates too
+            });
         } catch (error) {
             console.error('Error loading data:', error);
         }

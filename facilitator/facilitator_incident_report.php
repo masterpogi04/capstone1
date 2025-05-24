@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_type'])) {
 $reporter_id = $_SESSION['user_id'];
 $reporter_type = $_SESSION['user_type'];
 
-// Generate a new incident report ID at the start
+// Function to generate incident report ID
 function generateIncidentReportId($connection) {
     $currentMonth = date('n');
     $currentYear = date('Y');

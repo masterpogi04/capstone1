@@ -532,7 +532,7 @@ $currentDateTime = (new DateTime())->format('Y-m-d H:i:s.u');
             <label><i class="fas fa-eye"></i> Witness/es:</label>
             <div id="witnessesContainer">
                 <div class="witness-entry">
-                    <select class="form-control mb-2" name="witnessType[]" onchange="toggleWitnessFields(this)" required>
+                    <select class="form-control mb-2" name="witnessType[]" onchange="toggleWitnessFields(this)">
                         <option value="">Select Witness Type</option>
                         <option value="student">Student</option>
                         <option value="staff">Staff</option>
@@ -548,7 +548,7 @@ $currentDateTime = (new DateTime())->format('Y-m-d H:i:s.u');
                                 onchange="fetchWitnessInfo(this)">
                         </div>
                         <div class="col-md-8">
-                            <input type="text" class="form-control mb-2" name="witnesses[]" required placeholder="Student Name" oninput="this.value = this.value.toUpperCase()">
+                            <input type="text" class="form-control mb-2" name="witnesses[]" placeholder="Student Name" oninput="this.value = this.value.toUpperCase()">
                         </div>
                     </div>
 
@@ -559,12 +559,12 @@ $currentDateTime = (new DateTime())->format('Y-m-d H:i:s.u');
                             name="staffWitnessName[]" 
                             placeholder="Staff Name"
                              oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '').toUpperCase()" 
-                            required>
+                            >
                         </div>
                         <div class="col-md-6">
                             <input type="email" class="form-control mb-2" 
                                 name="witnessEmail[]" 
-                                placeholder="Staff Email" required>
+                                placeholder="Staff Email" >
                         </div>
                     </div>
                                 </div>
@@ -612,7 +612,7 @@ function toggleWitnessFields(select) {
     // Reset all fields
     witnessEntry.querySelectorAll('input').forEach(input => {
         input.value = '';
-        input.required = false;
+        
         input.disabled = true;
     });
     
@@ -625,7 +625,7 @@ function toggleWitnessFields(select) {
         staffFields.classList.remove('hidden');
         staffFields.querySelectorAll('input').forEach(input => {
             input.disabled = false;
-            input.required = true;
+           
         });
     }
 }

@@ -450,7 +450,7 @@ $connection->close();
                 <input type="text" class="form-control readonly-input" id="full_name" value="<?php echo htmlspecialchars($profile['last_name'] . ', ' . $profile['first_name'] . ' ' . $profile['middle_name']); ?>" readonly>
             </div>
             <?php
-            $personal_info = ['student_id', 'gender', 'birthdate', 'age', 'civil_status', 'province', 'city', 'email'];
+            $personal_info = ['student_id', 'gender', 'birthdate', 'civil_status', 'province', 'city', 'email']; // Remove 'age' from array
             foreach ($personal_info as $key):
                 if (isset($profile[$key])):
             ?>
@@ -462,7 +462,21 @@ $connection->close();
                 endif;
             endforeach;
             ?>
-            
+
+            <!-- Age field with dynamic calculation -->
+            <div class="form-group">
+                <label for="age">Age:</label>
+                <input type="text" class="form-control readonly-input" id="age" value="<?php 
+                    if (!empty($profile['birthdate'])) {
+                        $birthdate = new DateTime($profile['birthdate']);
+                        $today = new DateTime();
+                        echo $birthdate->diff($today)->y;
+                    } else {
+                        echo "N/A";
+                    }
+                ?>" readonly>
+            </div>
+                        
             <!-- Contact Number Field - Editable -->
             <div class="form-group">
                 <label for="contact_number">Contact Number:</label>

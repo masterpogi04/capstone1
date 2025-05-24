@@ -379,11 +379,6 @@ function getSessionValue($key, $default = '') {
                 alert('Please select a birth order');
             }
 
-            if (!$('input[name="familyIncome"]:checked').val()) {
-                isValid = false;
-                alert('Please select an estimated monthly family income');
-            }
-
             if (!isValid) {
                 e.preventDefault();
                 alert('Please fill all required fields');
@@ -469,6 +464,40 @@ function getSessionValue($key, $default = '') {
     function updateFamilyIncomeValue(value) {
         document.getElementById('familyIncomeValue').value = value;
     }
+
+    // Validation for contact numbers to start with 09
+        $('#fatherContact, #motherContact, #guardianContact').on('input', function() {
+            let value = this.value;
+            
+            // Remove non-numeric characters
+            value = value.replace(/[^0-9]/g, '');
+            
+            // Ensure it starts with 09
+            if (value.length >= 2 && value.substring(0, 2) !== '09') {
+                value = '09' + value.substring(Math.min(2, value.length));
+            }
+            
+            // Limit to 11 digits
+            value = value.substring(0, 11);
+            
+            this.value = value;
+        });
+        // Add blur validation to show error if not properly formatted
+        $('#fatherContact, #motherContact, #guardianContact').on('blur', function() {
+            if (this.value && !this.value.match(/^09[0-9]{9}$/)) {
+                $(this).addClass('is-invalid');
+                
+                // Don't show error for empty optional fields
+                if ($(this).attr('id') === 'fatherContact' && $('#fatherNotAvailable').is(':checked')) {
+                    $(this).removeClass('is-invalid');
+                }
+                if ($(this).attr('id') === 'motherContact' && $('#motherNotAvailable').is(':checked')) {
+                    $(this).removeClass('is-invalid');
+                }
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
 </script>
 </body>
 </html>

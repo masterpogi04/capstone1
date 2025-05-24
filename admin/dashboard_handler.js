@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = event.target.getAttribute('data-bs-target');
             if (id) {
                 history.pushState(null, null, id);
-                
+               
                 // Load appropriate data based on active tab
                 if (id === '#incident-reports') {
                     loadDepartmentData();
@@ -604,21 +604,16 @@ function renderDepartmentChart(departments) {
         return;
     }
     
-    // Prepare data for chart - use abbreviated names for labels due to space constraints
+    // Prepare data for chart - extract acronyms inside parentheses
     const fullNames = departments.map(dept => dept.name);
-    // Limit label length for chart display
     const labels = departments.map(dept => {
-        // Try to show a meaningful short version of the department name
-        const nameWithoutDept = dept.name.replace(/Department of |Department/gi, '').trim();
-        // Cut if still too long
-        return nameWithoutDept.length > 20 ? nameWithoutDept.substring(0, 17) + '...' : nameWithoutDept;
+        const match = dept.name.match(/\(([^)]+)\)/); // Regex to extract acronym inside parentheses
+        return match ? match[1] : dept.name; // Fallback to full name if no acronym found
     });
-    const counts = departments.map(dept => parseInt(dept.report_count)); // Convert to integers
-    
-    // Generate colors
+    const counts = departments.map(dept => parseInt(dept.report_count));
+
     const backgroundColors = generateGradientColors(departments.length);
-    
-    // Create new chart
+
     departmentChart = new Chart(canvas, {
         type: 'bar',
         data: {
@@ -656,8 +651,8 @@ function renderDepartmentChart(departments) {
                             family: "'Inter', sans-serif",
                             size: 12
                         },
-                        precision: 0,     // Ensure whole numbers
-                        stepSize: 1       // Set step size to 1
+                        precision: 0,
+                        stepSize: 1
                     }
                 },
                 x: {
@@ -667,10 +662,11 @@ function renderDepartmentChart(departments) {
                     ticks: {
                         font: {
                             family: "'Inter', sans-serif",
-                            size: 12
+                            size: 12,
+                            weight: 'bold'
                         },
-                        maxRotation: 45,
-                        minRotation: 45
+                        maxRotation: 0,
+                        minRotation: 0
                     }
                 }
             },
@@ -688,12 +684,11 @@ function renderDepartmentChart(departments) {
                     displayColors: false,
                     callbacks: {
                         title: function(context) {
-                            // Show full department name in tooltip title
                             const index = context[0].dataIndex;
                             return fullNames[index];
                         },
                         label: function(context) {
-                            return `Reports: ${Math.round(context.parsed.y)}`;  // Use Math.round for whole numbers
+                            return `Reports: ${Math.round(context.parsed.y)}`;
                         }
                     }
                 }
@@ -701,6 +696,7 @@ function renderDepartmentChart(departments) {
         }
     });
 }
+
 
 /**
  * Render the course chart with acronyms

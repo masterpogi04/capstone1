@@ -242,44 +242,6 @@ try {
         }
     }
     
-    // Get meetings from backup
-    $getMeetingsQuery = "SELECT * FROM backup_meetings WHERE incident_report_id = ?";
-    $getMeetingsStmt = $connection->prepare($getMeetingsQuery);
-    $getMeetingsStmt->bind_param("s", $reportId);
-    $getMeetingsStmt->execute();
-    $meetingsResult = $getMeetingsStmt->get_result();
-    
-    // Insert meetings
-    while ($meeting = $meetingsResult->fetch_assoc()) {
-        $insertMeetingQuery = "INSERT INTO meetings (
-                                incident_report_id, meeting_date, venue, 
-                                persons_present, meeting_minutes, location, 
-                                prepared_by, created_at, meeting_sequence
-                              ) VALUES (
-                                ?, ?, ?, 
-                                ?, ?, ?, 
-                                ?, ?, ?
-                              )";
-        
-        $insertStmt = $connection->prepare($insertMeetingQuery);
-        $insertStmt->bind_param(
-            "ssssssssi",
-            $newReportId,
-            $meeting['meeting_date'],
-            $meeting['venue'],
-            $meeting['persons_present'],
-            $meeting['meeting_minutes'],
-            $meeting['location'],
-            $meeting['prepared_by'],
-            $meeting['created_at'],
-            $meeting['meeting_sequence']
-        );
-        
-        if (!$insertStmt->execute()) {
-            throw new Exception("Failed to restore meeting: " . $connection->error);
-        }
-    }
-    
     // After successfully restoring, delete from both archive and backup tables
     
     // Delete from archive_incident_witnesses
@@ -336,15 +298,6 @@ try {
     
     if (!$deleteStmt->execute()) {
         throw new Exception("Failed to delete report from backup: " . $connection->error);
-    }
-    
-    // Delete from backup_meetings
-    $deleteBackupMeetingsQuery = "DELETE FROM backup_meetings WHERE incident_report_id = ?";
-    $deleteStmt = $connection->prepare($deleteBackupMeetingsQuery);
-    $deleteStmt->bind_param("s", $reportId);
-    
-    if (!$deleteStmt->execute()) {
-        throw new Exception("Failed to delete meetings from backup: " . $connection->error);
     }
     
     // Commit the transaction

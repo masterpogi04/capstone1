@@ -25,11 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $new_status = 'Done';
     
-    // First, get the incident_report_id and student_id for this referral
-    $get_referral_info_query = "SELECT r.incident_report_id, r.student_id 
-                               FROM referrals r 
-                               WHERE r.id = ?";
-    $stmt = $connection->prepare($get_referral_info_query);
+    // Get the student_id for this specific referral (for notification purposes)
+    $get_student_query = "SELECT student_id FROM referrals WHERE id = ?";
+    $stmt = $connection->prepare($get_student_query);
     if ($stmt === false) {
         die('Error preparing statement: ' . $connection->error);
     }
@@ -38,91 +36,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
+    $student_id = $row ? $row['student_id'] : null;
     
-    if ($row) {
-        $incident_report_id = $row['incident_report_id'];
-        $student_id = $row['student_id'];
+    // Update ONLY the specific referral that was selected
+    $update_query = "UPDATE referrals SET status = ? WHERE id = ?";
+    $stmt = $connection->prepare($update_query);
+    if ($stmt === false) {
+        die('Error preparing statement: ' . $connection->error);
+    }
+    
+    $stmt->bind_param("si", $new_status, $referral_id);
+    $result = $stmt->execute();
+    
+    if ($result) {
+        $_SESSION['success_message'] = "Status updated successfully";
         
-        // Update the current referral status
-        $update_this_referral = "UPDATE referrals SET status = ? WHERE id = ?";
-        $stmt = $connection->prepare($update_this_referral);
-        if ($stmt === false) {
-            die('Error preparing statement: ' . $connection->error);
-        }
-        
-        $stmt->bind_param("si", $new_status, $referral_id);
-        $result = $stmt->execute();
-        
-        // If the current referral has an incident_report_id, update all referrals with the same incident_report_id
-        if ($incident_report_id) {
-            $update_query = "UPDATE referrals SET status = ? WHERE incident_report_id = ? AND incident_report_id IS NOT NULL";
-            $stmt = $connection->prepare($update_query);
-            if ($stmt === false) {
-                die('Error preparing statement: ' . $connection->error);
+        // Create a notification for the student (if student_id exists)
+        if ($student_id) {
+            $notif_query = "INSERT INTO notifications (user_type, user_id, message, link, is_read, created_at) 
+                           VALUES ('student', ?, 'Your referral has been marked as done by the counselor.', 'view_student_referrals.php', 0, NOW())";
+            $notif_stmt = $connection->prepare($notif_query);
+            if ($notif_stmt) {
+                $notif_stmt->bind_param("s", $student_id);
+                $notif_stmt->execute();
             }
-            
-            $stmt->bind_param("si", $new_status, $incident_report_id);
-            $result = $stmt->execute();
-        }
-        
-        if ($result) {
-            $_SESSION['success_message'] = "Status updated successfully for all related referrals";
-            
-            // Create a notification for the student
-            if ($student_id) {
-                $notif_query = "INSERT INTO notifications (user_type, user_id, message, link, is_read, created_at) 
-                               VALUES ('student', ?, 'Your referral has been marked as done by the counselor.', 'view_student_referrals.php', 0, NOW())";
-                $notif_stmt = $connection->prepare($notif_query);
-                if ($notif_stmt) {
-                    $notif_stmt->bind_param("s", $student_id);
-                    $notif_stmt->execute();
-                }
-            }
-            
-            // If this referral is linked to an incident report, find all involved students and notify them
-            if ($incident_report_id) {
-                // Get all students involved in this incident report
-                $student_query = "SELECT DISTINCT sv.student_id 
-                                 FROM student_violations sv 
-                                 WHERE sv.incident_report_id = ?";
-                $stmt = $connection->prepare($student_query);
-                if ($stmt) {
-                    $stmt->bind_param("i", $incident_report_id);
-                    $stmt->execute();
-                    $student_result = $stmt->get_result();
-                    
-                    while ($student_row = $student_result->fetch_assoc()) {
-                        if ($student_row['student_id']) {
-                            $notif_query = "INSERT INTO notifications (user_type, user_id, message, link, is_read, created_at) 
-                                          VALUES ('student', ?, 'Your referral has been marked as done by the counselor.', 'view_student_referrals.php', 0, NOW())";
-                            $notif_stmt = $connection->prepare($notif_query);
-                            if ($notif_stmt) {
-                                $notif_stmt->bind_param("s", $student_row['student_id']);
-                                $notif_stmt->execute();
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            $_SESSION['error_message'] = "Error updating status: " . $connection->error;
         }
     } else {
-        // If there's no incident_report_id or student_id, just update this specific referral
-        $update_this_referral = "UPDATE referrals SET status = ? WHERE id = ?";
-        $stmt = $connection->prepare($update_this_referral);
-        if ($stmt === false) {
-            die('Error preparing statement: ' . $connection->error);
-        }
-        
-        $stmt->bind_param("si", $new_status, $referral_id);
-        $result = $stmt->execute();
-        
-        if ($result) {
-            $_SESSION['success_message'] = "Status updated successfully";
-        } else {
-            $_SESSION['error_message'] = "Error updating status: " . $connection->error;
-        }
+        $_SESSION['error_message'] = "Error updating status: " . $connection->error;
     }
     
     // Redirect to refresh the page
@@ -143,7 +83,7 @@ function checkStudentProfile($connection, $student_id) {
     return $row['profile_exists'] > 0;
 }
 
-// Fetch referral details with incident report information and involved students
+// Fetch referral details with the specific student being referred
 $query = "SELECT r.*, 
     DATE_FORMAT(r.date, '%M %d, %Y') as formatted_date,
     CASE 
@@ -152,38 +92,52 @@ $query = "SELECT r.*,
         ELSE r.reason_for_referral
     END as detailed_reason,
     ir.id as incident_report_id,
-    GROUP_CONCAT(DISTINCT s.student_id) as student_ids,
-    GROUP_CONCAT(DISTINCT 
-        CASE 
-            WHEN s.section_id IS NOT NULL THEN
-                CONCAT(
-                    CONCAT(UPPER(SUBSTRING(s.first_name, 1, 1)), LOWER(SUBSTRING(s.first_name, 2))),
-                    ' ',
-                    CASE 
-                        WHEN s.middle_name IS NOT NULL AND s.middle_name != '' 
-                        THEN CONCAT(UPPER(SUBSTRING(s.middle_name, 1, 1)), '. ') 
-                        ELSE ''
-                    END,
-                    CONCAT(UPPER(SUBSTRING(s.last_name, 1, 1)), LOWER(SUBSTRING(s.last_name, 2))),
-                    '|',
-                    s.student_id
-                )
-            ELSE
-                CONCAT(
-                    sv.student_name,
-                    ' (Non-CEIT Student)'
-                )
-        END 
-        SEPARATOR ',<br><br>'
-    ) as involved_students
+    -- For CEIT students, use r.student_id directly
+    -- For non-CEIT students, we'll use the student info stored in the referral itself
+    r.student_id as referred_student_id,
+    -- Display student name based on availability
+    CASE 
+        WHEN r.student_id IS NOT NULL THEN (
+            -- For CEIT students with student_id
+            SELECT CASE 
+                WHEN s.section_id IS NOT NULL THEN
+                    CONCAT(
+                        CONCAT(UPPER(SUBSTRING(s.first_name, 1, 1)), LOWER(SUBSTRING(s.first_name, 2))),
+                        ' ',
+                        CASE 
+                            WHEN s.middle_name IS NOT NULL AND s.middle_name != '' 
+                            THEN CONCAT(UPPER(SUBSTRING(s.middle_name, 1, 1)), '. ') 
+                            ELSE ''
+                        END,
+                        CONCAT(UPPER(SUBSTRING(s.last_name, 1, 1)), LOWER(SUBSTRING(s.last_name, 2))),
+                        ' (',
+                        s.student_id,
+                        ')'
+                    )
+                ELSE 'Student not found'
+            END
+            FROM tbl_student s 
+            WHERE s.student_id = r.student_id
+        )
+        ELSE 
+            -- For non-CEIT students, use the name fields directly from referrals table
+            CONCAT(
+                CONCAT(UPPER(SUBSTRING(r.first_name, 1, 1)), LOWER(SUBSTRING(r.first_name, 2))),
+                ' ',
+                CASE 
+                    WHEN r.middle_name IS NOT NULL AND r.middle_name != '' 
+                    THEN CONCAT(UPPER(SUBSTRING(r.middle_name, 1, 1)), '. ') 
+                    ELSE ''
+                END,
+                CONCAT(UPPER(SUBSTRING(r.last_name, 1, 1)), LOWER(SUBSTRING(r.last_name, 2))),
+                ' (',
+                r.course_year,
+                ')'
+            )
+    END as referred_student_name
     FROM referrals r
     LEFT JOIN incident_reports ir ON r.incident_report_id = ir.id
-    LEFT JOIN student_violations sv ON ir.id = sv.incident_report_id
-    LEFT JOIN tbl_student s ON sv.student_id = s.student_id
-    LEFT JOIN sections sec ON s.section_id = sec.id
-    LEFT JOIN courses c ON sec.course_id = c.id
-    WHERE r.id = ?
-    GROUP BY r.id";
+    WHERE r.id = ?";
 
 $stmt = $connection->prepare($query);
 if ($stmt === false) {
@@ -196,16 +150,16 @@ $result = $stmt->get_result();
 $referral = $result->fetch_assoc();
 
 if (!$referral) {
-    header("Location: view_referral_details.php");
+    header("Location: view_referrals_page.php");
     exit();
 }
 
-// Check if student profile exists
+// Check if student profile exists for the referred student
 $has_profile = false;
-if (isset($referral['student_id'])) {
-    $has_profile = checkStudentProfile($connection, $referral['student_id']);
+$referred_student_id = $referral['referred_student_id'];
+if ($referred_student_id) {
+    $has_profile = checkStudentProfile($connection, $referred_student_id);
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -220,7 +174,6 @@ if (isset($referral['student_id'])) {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-   
    <style>
 
                 :root {
@@ -742,132 +695,66 @@ if (isset($referral['student_id'])) {
             <p><span class="label">Date Referred:</span>
             <span class="multi-line-content"><?php echo htmlspecialchars($referral['formatted_date']); ?></span></p>
 
-        <?php if ($referral['involved_students']): ?>
-            <p><span class="label">Students Involved:</span>
+            <p><span class="label">Student Referred:</span>
             <span class="multi-line-content">
-                    <?php 
-                    if (!empty($referral['involved_students'])) {
-                        echo $referral['involved_students'];
-                    } else {
-                        echo "No students recorded";
-                    }
-                    ?>
+                <?php 
+                if (!empty($referral['referred_student_name'])) {
+                    echo htmlspecialchars($referral['referred_student_name']);
+                } else {
+                    echo "No student information available";
+                }
+                ?>
             </span></p>
-        <?php endif; ?>
 
             <p><span class="label">Reason for Referral:</span>
             <span class="multi-line-content"><?php echo htmlspecialchars($referral['detailed_reason']); ?></span></p>
 
-
             <p><span class="label">Faculty Name:</span>
             <span class="multi-line-content"><?php echo htmlspecialchars($referral['faculty_name']); ?></span></p>
 
-
-
             <p><span class="label">Acknowledged By:</span>
             <span class="multi-line-content"><?php echo htmlspecialchars($referral['acknowledged_by']); ?></span></p>
-
 
             <p><span class="label">Current Status:</span>
             <span class="multi-line-content"><?php echo htmlspecialchars($referral['status'] ?? 'Pending'); ?></span></p>
         </div>
     </div>
 
+    <div class="action-buttons">
+            <form id="markAsDoneForm" method="POST" style="display: inline;">
+                <input type="hidden" name="update_status" value="1">
+                <button type="button" 
+                        onclick="confirmMarkAsDone()"
+                        class="btn btn-info p-4" 
+                        <?php echo ($referral['status'] === 'Done') ? 'disabled' : ''; ?>>
+                    <i class="fas fa-calendar-check"></i>
+                    Mark as Done
+                </button>
+            </form>
 
-            <div class="action-buttons">
-    <form id="markAsDoneForm" method="POST" style="display: inline;">
-        <input type="hidden" name="update_status" value="1">
-        <button type="button" 
-                onclick="confirmMarkAsDone()"
-                class="btn btn-info p-4" 
-                <?php echo ($referral['status'] === 'Done') ? 'disabled' : ''; ?>>
-            <i class="fas fa-calendar-check"></i>
-            Mark as Done
-        </button>
-    </form>
+            <?php 
+            // Only show profile button for CEIT students (those with student_id)
+            if ($referred_student_id && $referral['student_id'] !== null): 
+            ?>
+                <a href="view_student_profile-generate_pdf.php?student_id=<?php echo htmlspecialchars($referred_student_id); ?>" 
+                   target="_blank" class="btn btn-success">
+                    <i class="fas fa-user"></i>
+                    View Student<br>Profile
+                </a>
+            <?php else: ?>
+                <button type="button" class="btn btn-secondary" disabled>
+                    <i class="fas fa-user"></i>
+                    No Student<br>Profile Available
+                    <br><small>(Non-CEIT Student)</small>
+                </button>
+            <?php endif; ?>
 
-   
-
-    <?php 
-    // Get student IDs from the referral
-    $query = "SELECT DISTINCT s.student_id 
-              FROM student_violations sv 
-              JOIN tbl_student s ON sv.student_id = s.student_id 
-              WHERE sv.incident_report_id = ?";
-    $stmt = $connection->prepare($query);
-    $stmt->bind_param("s", $referral['incident_report_id']);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $student_ids = [];
-    while($row = $result->fetch_assoc()) {
-        $student_ids[] = $row['student_id'];
-    }
-    $has_ceit_students = !empty($student_ids);
-    ?>
-
-    <?php if ($has_ceit_students): ?>
-        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#profileModal">
-            <i class="fas fa-user"></i>
-            View Student<br>Details
-        </button>
-
-        <!-- Modal -->
-        <div class="modal fade" id="profileModal" tabindex="-1" role="dialog" aria-labelledby="profileModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="profileModalLabel">Select Student Profile</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <?php
-                        foreach ($student_ids as $student_id) {
-                            echo '<div class="mb-2">';
-                            echo '<a href="view_student_profile-generate_pdf.php?student_id=' . $student_id . '" ';
-                            echo 'target="_blank" class="btn btn-info btn-block text-left">';
-                            // Get student name for display
-                            $name_query = "SELECT CONCAT(
-                                CONCAT(UPPER(SUBSTRING(first_name, 1, 1)), LOWER(SUBSTRING(first_name, 2))),
-                                ' ',
-                                CASE 
-                                    WHEN middle_name IS NOT NULL AND middle_name != '' 
-                                    THEN CONCAT(UPPER(SUBSTRING(middle_name, 1, 1)), '. ') 
-                                    ELSE ''
-                                END,
-                                CONCAT(UPPER(SUBSTRING(last_name, 1, 1)), LOWER(SUBSTRING(last_name, 2)))
-                            ) as full_name FROM tbl_student WHERE student_id = ?";
-                            $name_stmt = $connection->prepare($name_query);
-                            $name_stmt->bind_param("s", $student_id);
-                            $name_stmt->execute();
-                            $name_result = $name_stmt->get_result();
-                            $student_name = $name_result->fetch_assoc()['full_name'];
-                            echo '<i class="fas fa-user mr-2"></i> ' . htmlspecialchars($student_name) . ' (' . $student_id . ')';
-                            echo '</a>';
-                            echo '</div>';
-                        }
-                        ?>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
+            <a href="generate_referral_pdf.php?id=<?php echo $referral_id; ?>" 
+               target="_blank" class="btn btn-primary">
+                <i class="fas fa-file-pdf"></i>
+                Generate<br> PDF
+            </a>
         </div>
-    <?php else: ?>
-        <button type="button" class="btn btn-secondary" disabled>
-            <i class="fas fa-user"></i>
-            No CEIT Student<br>Profiles
-        </button>
-    <?php endif; ?>
-
-    <a href="generate_referral_pdf.php?id=<?php echo $referral_id; ?>" 
-       target="_blank"  class="btn btn-primary">
-        <i class="fas fa-file-pdf"></i>
-        Generate<br> PDF
-    </a>
-</div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
