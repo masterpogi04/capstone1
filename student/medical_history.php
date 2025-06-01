@@ -12,32 +12,56 @@ function getSessionValue($key, $default = '') {
     return isset($_SESSION['medical_history'][$key]) ? $_SESSION['medical_history'][$key] : $default;
 }
 
-// Add this near the top of your PHP code, in the getSessionValue function or after it
+// Function to get signature path
 function getSignaturePath() {
-    // Check if signature path exists in student profile session
-    if (isset($_SESSION['student_profile']['signature_path'])) {
-        return $_SESSION['student_profile']['signature_path'];
-    }
-    return '';
+    return isset($_SESSION['student_profile']['signature_path']) && 
+           !empty($_SESSION['student_profile']['signature_path']) ? 
+           $_SESSION['student_profile']['signature_path'] : '';
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Store form data in session
+    // Store checkbox states first
+    $no_medications = isset($_POST['no_medications']);
+    $no_medical_list = isset($_POST['no_medical_list']);
+    $no_allergies = isset($_POST['no_allergies']);
+    $no_physical_conditions = isset($_POST['no_physical_conditions']);
+    $no_problems = isset($_POST['no_problems']);
+    $fam_no_problems = isset($_POST['fam_no_problems']);
+
+    // Process medications
+    $medications = $no_medications ? 'NO MEDICATIONS' : ($_POST['medications'] ?? '');
+
+    // Process conditions
+    $conditions = $no_medical_list ? 'NO MEDICAL CONDITIONS' : ($_POST['conditions'] ?? '');
+
+    // Process allergies
+    $allergy = $no_allergies ? 'NO ALLERGIES' : ($_POST['allergy'] ?? '');
+
+    // Process physical conditions
+    $scoliosis = $no_physical_conditions ? 'NO PHYSICAL CONDITIONS' : ($_POST['scoliosis'] ?? '');
+
+    // Process problems
+    $problems = $no_problems ? 'NO PROBLEMS' : ($_POST['problems'] ?? '');
+
+    // Process family problems
+    $fam_problems = $fam_no_problems ? 'NO FAMILY PROBLEMS' : ($_POST['fam-problems'] ?? '');
+
+    // Store in session
     $_SESSION['medical_history'] = [
-        'medications' => $_POST['medications'] ?? '',
-        'no_medications' => isset($_POST['no_medications']),
-        'conditions' => $_POST['conditions'] ?? '',
-        'no_medical_list' => isset($_POST['no_medical_list']),
-        'allergy' => $_POST['allergy'] ?? '',
-        'no_allergies' => isset($_POST['no_allergies']),
-        'scoliosis' => $_POST['scoliosis'] ?? '',
-        'no_physical_conditions' => isset($_POST['no_physical_conditions']),
+        'medications' => $medications,
+        'no_medications' => $no_medications,
+        'conditions' => $conditions,
+        'no_medical_list' => $no_medical_list,
+        'allergy' => $allergy,
+        'no_allergies' => $no_allergies,
+        'scoliosis' => $scoliosis,
+        'no_physical_conditions' => $no_physical_conditions,
         'suicide' => $_POST['suicide'] ?? '',
         'suicide_reason' => $_POST['suicide_reason'] ?? '',
-        'problems' => $_POST['problems'] ?? '',
-        'no_problems' => isset($_POST['no_problems']),
-        'fam_problems' => $_POST['fam-problems'] ?? '',
-        'fam_no_problems' => isset($_POST['fam_no_problems']),
+        'problems' => $problems,
+        'no_problems' => $no_problems,
+        'fam_problems' => $fam_problems,
+        'fam_no_problems' => $fam_no_problems,
         'fitness' => $_POST['fitness'] ?? '',
         'fitness_specify' => $_POST['fitness_specify'] ?? '',
         'fitness_frequency' => $_POST['fitness_frequency'] ?? '',
@@ -47,23 +71,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
         strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-        // Just save to session and return success
         echo json_encode(['status' => 'success']);
         exit;
     }
-}
 
-// Enable error logging
-ini_set('display_errors', 1);
-ini_set('log_errors', 1);
-error_reporting(E_ALL);
+    // Handle signature upload
+    // In your POST handling code, modify the signature handling section:
+$signature_path = getSignaturePath(); // Default to existing path
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $student_data = $_POST;
-
-    // Handle signature only if a new one is provided
-    if (isset($_POST['signature']) && !empty($_POST['signature']) && 
-        strpos($_POST['signature'], 'data:image/png;base64,') === 0) {
+if (isset($_POST['signature'])) {
+    if (empty($_POST['signature'])) {
+        // Signature was cleared - remove existing signature
+        if (isset($_SESSION['student_profile']['signature_path'])) {
+            $old_signature_path = $_SERVER['DOCUMENT_ROOT'] . $_SESSION['student_profile']['signature_path'];
+            if (file_exists($old_signature_path)) {
+                unlink($old_signature_path);
+            }
+            unset($_SESSION['student_profile']['signature_path']);
+            $signature_path = '';
+        }
+    } elseif (strpos($_POST['signature'], 'data:image/png;base64,') === 0) {
+        // New signature provided
         $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/capstone1/student/uploads/student_signatures/';
         if (!file_exists($uploadDir)) {
             mkdir($uploadDir, 0777, true);
@@ -71,49 +99,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $signature_filename = 'signature_' . uniqid() . '.png';
         $signature_path = $uploadDir . $signature_filename;
-        $signature_data = $_POST['signature'];
-        $signature_data = str_replace('data:image/png;base64,', '', $signature_data);
+        $signature_data = str_replace('data:image/png;base64,', '', $_POST['signature']);
         $signature_data = base64_decode($signature_data);
 
         if (file_put_contents($signature_path, $signature_data) !== false) {
-            // Remove old signature file if exists
             if (isset($_SESSION['student_profile']['signature_path'])) {
                 $old_signature_path = $_SERVER['DOCUMENT_ROOT'] . $_SESSION['student_profile']['signature_path'];
                 if (file_exists($old_signature_path)) {
                     unlink($old_signature_path);
                 }
             }
-            $student_data['signature_path'] = '/capstone1/student/uploads/student_signatures/' . $signature_filename;
-            $_SESSION['student_profile']['signature_path'] = $student_data['signature_path'];
+            $signature_path = '/capstone1/student/uploads/student_signatures/' . $signature_filename;
+            $_SESSION['student_profile']['signature_path'] = $signature_path;
         }
-    } else {
-        // No new signature provided, retain the existing one
-        $student_data['signature_path'] = isset($_SESSION['student_profile']['signature_path']) ? 
-            $_SESSION['student_profile']['signature_path'] : '';
     }
+}
 
-    // Handle fitness activity and frequency
-    if ($student_data['fitness'] === 'no') {
-        $student_data['fitness_activity'] = 'NO FITNESS';
-        $student_data['fitness_frequency'] = null;
-    } else {
-        $student_data['fitness_activity'] = $student_data['fitness_specify'];
-        $student_data['fitness_frequency'] = $student_data['fitness_frequency'];
-    }
+    // Handle fitness activity
+    $fitness_activity = ($_POST['fitness'] === 'no') ? 'NO FITNESS' : $_POST['fitness_specify'];
+    $fitness_frequency = ($_POST['fitness'] === 'no') ? null : $_POST['fitness_frequency'];
 
-     if (!isset($student_data['problems']) || empty($student_data['problems'])) {
-        $student_data['problems'] = 'NO PROBLEMS';
-    }
-
-    // Ensure family_problems is set
-    if (!isset($student_data['fam-problems']) || empty($student_data['fam-problems'])) {
-        $student_data['family_problems'] = 'NO PROBLEMS';
-    } else {
-        $student_data['family_problems'] = $student_data['fam-problems'];
-    }
-
- 
-    // Prepare and execute SQL update
+    // Prepare SQL update
     $sql = "UPDATE student_profiles SET 
         medications = ?, 
         medical_conditions = ?, 
@@ -127,32 +133,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         signature_path = ?
     WHERE student_id = ?";
 
-    // Prepare the statement
     $stmt = $connection->prepare($sql);
     if ($stmt === false) {
         error_log("Prepare failed: " . $connection->error);
         die("Prepare failed: " . $connection->error);
     }
 
-    // Bind parameters
     $stmt->bind_param("sssssssssss",
-        $student_data['medications'],
-        $student_data['conditions'],
-        $student_data['suicide'],
-        $student_data['suicide_reason'],
-        $student_data['problems'],
-        $student_data['fam-problems'],
-        $student_data['fitness_activity'],
-        $student_data['fitness_frequency'],
-        $student_data['stress'],
-        $student_data['signature_path'],
+        $medications,
+        $conditions,
+        $_POST['suicide'],
+        $_POST['suicide_reason'],
+        $problems,
+        $fam_problems,
+        $fitness_activity,
+        $fitness_frequency,
+        $_POST['stress'],
+        $signature_path,
         $_SESSION['student_profile']['student_id']
     );
 
-    // Execute the statement
     if ($stmt->execute()) {
-        error_log("Data updated successfully for student ID: " . $_SESSION['student_profile']['student_id']);
-        $_SESSION['student_profile'] = array_merge($_SESSION['student_profile'], $student_data);
         header("Location: review.php");
         exit;
     } else {
@@ -425,39 +426,129 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <script>
 $(document).ready(function() {
+    // Initialize signature pad
     var canvas = document.getElementById('signatureCanvas');
-    signaturePad = new SignaturePad(canvas);
+    var signaturePad = new SignaturePad(canvas);
+    // Add this after initializing signaturePad
+    signaturePad.addEventListener("endStroke", function() {
+        if (!signaturePad.isEmpty()) {
+            $('#signatureData').val(signaturePad.toDataURL());
+        }
+    });
     
     // Load existing signature if available
     var savedSignaturePath = "<?php echo getSignaturePath(); ?>";
-    
     if (savedSignaturePath) {
-        // Create full URL from the relative path
-        var fullSignatureUrl = savedSignaturePath;
-        
-        // If path doesn't start with http or https, make it absolute
-        if (!fullSignatureUrl.startsWith('http')) {
-            fullSignatureUrl = window.location.origin + savedSignaturePath;
-        }
-        
-        // Load the image onto the canvas
         var img = new Image();
         img.onload = function() {
             var ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0);
             signaturePad._isEmpty = false;
         };
-        img.onerror = function() {
-            console.error("Error loading signature image:", fullSignatureUrl);
-        };
-        img.src = fullSignatureUrl;
+        img.src = savedSignaturePath;
     }
+    $('#medicalHistoryForm').on('submit', function(e) {
+        // Update signature data before submission if there's a signature
+        if (!signaturePad.isEmpty()) {
+            $('#signatureData').val(signaturePad.toDataURL());
+        }
 
-    // Clear signature button event handler
+        // Validate form
+        if (!validateForm()) {
+            e.preventDefault();
+            return false;
+        }
+
+        // Save field states
+        saveFieldStates();
+
+        return true;
+    });
     $('#clearSignature').click(function() {
-        signaturePad.clear();
-        // Also clear the hidden field containing signature data
-        $('#signatureData').val('');
+    signaturePad.clear();
+    $('#signatureData').val('');
+    // Also clear from session if needed
+    if (typeof savedFieldStates !== 'undefined' && savedFieldStates.signature) {
+        savedFieldStates.signature = '';
+        sessionStorage.setItem('medicalFormStates', JSON.stringify(savedFieldStates));
+    }
+});
+
+    // Handle "No" checkboxes and their corresponding fields
+    $('#no_medications').change(function() {
+        if (this.checked) {
+            $('#medications').val('NO MEDICATIONS').prop('readonly', true);
+        } else {
+            $('#medications').val('').prop('readonly', false);
+        }
+        validateMedications();
+        saveFieldStates();
+    });
+
+    $('#no_medical_list').change(function() {
+        if (this.checked) {
+            $('.condition-checkbox').prop('checked', false).prop('disabled', true);
+            $('#other_conditions').val('').prop('readonly', true);
+            $('.condition-options').addClass('text-muted');
+        } else {
+            $('.condition-checkbox').prop('disabled', false);
+            $('#other_conditions').prop('readonly', false);
+            $('.condition-options').removeClass('text-muted');
+        }
+        updateConditionsHiddenField();
+        saveFieldStates();
+    });
+
+    $('#no_allergies').change(function() {
+        if (this.checked) {
+            $('#allergy').val('').prop('readonly', true);
+            $('.allergy-input').addClass('text-muted');
+        } else {
+            $('#allergy').prop('readonly', false);
+            $('.allergy-input').removeClass('text-muted');
+        }
+        updateConditionsHiddenField();
+        saveFieldStates();
+    });
+
+    $('#no_physical_conditions').change(function() {
+        if (this.checked) {
+            $('#scoliosis').val('').prop('readonly', true);
+            $('.physical-input').addClass('text-muted');
+        } else {
+            $('#scoliosis').prop('readonly', false);
+            $('.physical-input').removeClass('text-muted');
+        }
+        updateConditionsHiddenField();
+        saveFieldStates();
+    });
+
+    $('#no_problems').change(function() {
+        if (this.checked) {
+            $('.problem-checkbox').prop('checked', false).prop('disabled', true);
+            $('#problem_others_text').val('').prop('readonly', true).hide();
+            $('.problem-options').addClass('text-muted');
+        } else {
+            $('.problem-checkbox').prop('disabled', false);
+            $('#problem_others_text').prop('readonly', false);
+            $('.problem-options').removeClass('text-muted');
+        }
+        updateProblemsHiddenField(false);
+        saveFieldStates();
+    });
+
+    $('#fam_no_problems').change(function() {
+        if (this.checked) {
+            $('.fam-problem-checkbox').prop('checked', false).prop('disabled', true);
+            $('#fam_problem_others_text').val('').prop('readonly', true).hide();
+            $('.fam-problem-options').addClass('text-muted');
+        } else {
+            $('.fam-problem-checkbox').prop('disabled', false);
+            $('#fam_problem_others_text').prop('readonly', false);
+            $('.fam-problem-options').removeClass('text-muted');
+        }
+        updateProblemsHiddenField(true);
+        saveFieldStates();
     });
 
     // Handle Others checkbox for personal problems
@@ -472,7 +563,7 @@ $(document).ready(function() {
             othersText.prop('required', false).removeClass('is-invalid').hide().prop('readonly', true);
         }
         updateProblemsHiddenField(false);
-        saveFieldStates(); // Save state when checkbox changes
+        saveFieldStates();
     });
 
     // Handle Others checkbox for family problems
@@ -487,7 +578,7 @@ $(document).ready(function() {
             othersText.prop('required', false).removeClass('is-invalid').hide().prop('readonly', true);
         }
         updateProblemsHiddenField(true);
-        saveFieldStates(); // Save state when checkbox changes
+        saveFieldStates();
     });
 
     // Handle text input for personal problems Others
@@ -506,261 +597,35 @@ $(document).ready(function() {
         updateProblemsHiddenField(true);
     });
 
-    // Handle "No medications" checkbox
-    $('#no_medications').change(function() {
-        if(this.checked) {
-            $('#medications').val('NO MEDICATIONS').prop('readonly', true);
-        } else {
-            $('#medications').val('').prop('readonly', false);
-        }
-        validateMedications();
-        saveFieldStates(); // Save state when checkbox changes
-    });
-
-    // Handle medications input
-    $('#medications').on('input', function() {
-        if($(this).val().trim() !== '') {
-            $('#no_medications').prop('checked', false);
-        }
-        validateMedications();
-    });
-
-    // Add these event handlers for the condition checkboxes
-    $('.condition-checkbox').change(function() {
-        if($(this).is(':checked')) {
-            $('#no_medical_list').prop('checked', false);
-            $('.condition-options').removeClass('text-muted');
-            // Enable related fields
-            $('.condition-checkbox').prop('disabled', false);
-            $('#other_conditions').prop('readonly', false);
-        }
-        updateConditionsHiddenField();
-        saveFieldStates(); // Save state when checkbox changes
-    });
-
-    // Add input handlers for each section
-    $('#other_conditions').on('input', function() {
-        if($(this).val().trim() !== '') {
-            $('#no_medical_list').prop('checked', false);
-            $('.condition-checkbox').prop('disabled', false);
-            $('#other_conditions').prop('readonly', false);
-            $('.condition-options').removeClass('text-muted');
-        }
-        updateConditionsHiddenField();
-    });
-
-    $('#allergy').on('input', function() {
-        if($(this).val().trim() !== '') {
-            $('#no_allergies').prop('checked', false);
-            $('#allergy').prop('readonly', false);
-            $('.allergy-input').removeClass('text-muted');
-        }
-        updateConditionsHiddenField();
-    });
-
-    $('#scoliosis').on('input', function() {
-        if($(this).val().trim() !== '') {
-            $('#no_physical_conditions').prop('checked', false);
-            $('#scoliosis').prop('readonly', false);
-            $('.physical-input').removeClass('text-muted');
-        }
-        updateConditionsHiddenField();
-    });
-
-    // Handle "No medical conditions" checkbox
-    $('#no_medical_list').change(function() {
-        if(this.checked) {
-            $('.condition-checkbox').prop('checked', false).prop('disabled', true);
-            $('#other_conditions').val('').prop('readonly', true);
-            $('.condition-options').addClass('text-muted');
-        } else {
-            $('.condition-checkbox').prop('disabled', false);
-            $('#other_conditions').prop('readonly', false);
-            $('.condition-options').removeClass('text-muted');
-        }
-        updateConditionsHiddenField();
-        saveFieldStates(); // Save state when checkbox changes
-    });
-
-    // Handle "No allergies" checkbox
-    $('#no_allergies').change(function() {
-        if(this.checked) {
-            $('#allergy').val('').prop('readonly', true);
-            $('.allergy-input').addClass('text-muted');
-        } else {
-            $('#allergy').prop('readonly', false);
-            $('.allergy-input').removeClass('text-muted');
-        }
-        updateConditionsHiddenField();
-        saveFieldStates(); // Save state when checkbox changes
-    });
-
-    // Handle "No physical conditions" checkbox
-    $('#no_physical_conditions').change(function() {
-        if(this.checked) {
-            $('#scoliosis').val('').prop('readonly', true);
-            $('.physical-input').addClass('text-muted');
-        } else {
-            $('#scoliosis').prop('readonly', false);
-            $('.physical-input').removeClass('text-muted');
-        }
-        updateConditionsHiddenField();
-        saveFieldStates(); // Save state when checkbox changes
-    });
-
     // Handle suicide question
     $('input[name="suicide"]').change(function() {
-        if(this.value === 'yes') {
+        if (this.value === 'yes') {
             $('#suicide_reason_container').show();
             $('#suicide_reason').prop('readonly', false);
         } else {
             $('#suicide_reason_container').hide();
             $('#suicide_reason').val('').prop('readonly', true);
         }
-        saveFieldStates(); // Save state when radio changes
+        saveFieldStates();
     });
 
     // Handle fitness question
     $('input[name="fitness"]').change(function() {
-        if(this.value === 'yes') {
+        if (this.value === 'yes') {
             $('#fitness_specify').prop('disabled', false);
             $('input[name="fitness_frequency"]').prop('disabled', false);
         } else {
             $('#fitness_specify').val('').prop('disabled', true);
             $('input[name="fitness_frequency"]').prop('checked', false).prop('disabled', true);
         }
-        saveFieldStates(); // Save state when radio changes
+        saveFieldStates();
     });
 
-    // Prevent form submission on enter key
-    $(window).keydown(function(event){
-        if(event.keyCode == 13) {
-            event.preventDefault();
-            return false;
-        }
-    });
-
-    // Modify your form submit handler to temporarily enable disabled fields before submission
-    $('#medicalHistoryForm').submit(function(e) {
-        e.preventDefault();
-        if (validateForm()) {
-            // If the signature pad has a signature, get its data
-            if (!signaturePad.isEmpty()) {
-                var signatureData = signaturePad.toDataURL();
-                $('#signatureData').val(signatureData);
-            } else {
-                // If no new signature is drawn, keep the existing one if it exists
-                var savedSignaturePath = "<?php echo getSignaturePath(); ?>";
-                if (savedSignaturePath && $('#signatureData').val() === '') {
-                    // No need to update, use existing signature path
-                    console.log("Using existing signature path");
-                }
-            }
-            
-            // Save the disabled state of fields to session storage before enabling them
-            saveFieldStates();
-            
-            // Temporarily enable all disabled fields so they're included in the form submission
-            var disabledFields = $(this).find(':disabled').each(function() {
-                // Store the disabled state as a data attribute
-                $(this).data('wasDisabled', true);
-                // Enable the field for submission
-                $(this).prop('disabled', false);
-            });
-            
-            // Temporarily enable all readonly fields for submission
-            var readonlyFields = $(this).find('[readonly]').each(function() {
-                $(this).data('wasReadonly', true);
-                $(this).prop('readonly', false);
-            });
-            
-            // Submit the form
-            this.submit();
-            
-            // Re-disable the fields (though this won't execute due to page navigation)
-            disabledFields.each(function() {
-                if ($(this).data('wasDisabled')) {
-                    $(this).prop('disabled', true);
-                }
-            });
-            
-            readonlyFields.each(function() {
-                if ($(this).data('wasReadonly')) {
-                    $(this).prop('readonly', true);
-                }
-            });
-        } else {
-            alert('Please fill out all required fields.');
-        }
-    });
-
-    // Save field states to session storage
-    function saveFieldStates() {
-        const fieldStates = {
-            noMedications: $('#no_medications').is(':checked'),
-            medications: $('#medications').val(),
-            conditionCheckboxesDisabled: $('.condition-checkbox').first().is(':disabled'),
-            noMedicalList: $('#no_medical_list').is(':checked'),
-            noAllergies: $('#no_allergies').is(':checked'),
-            noPhysicalConditions: $('#no_physical_conditions').is(':checked'),
-            suicide: $('input[name="suicide"]:checked').val() || '',
-            suicideReason: $('#suicide_reason').val(),
-            noProblems: $('#no_problems').is(':checked'),
-            problemCheckboxesDisabled: $('.problem-checkbox').first().is(':disabled'),
-            problemOthersChecked: $('#problem_others').is(':checked'),
-            problemOthersText: $('#problem_others_text').val(),
-            famNoProblems: $('#fam_no_problems').is(':checked'),
-            famProblemCheckboxesDisabled: $('.fam-problem-checkbox').first().is(':disabled'),
-            famProblemOthersChecked: $('#fam_problem_others').is(':checked'),
-            famProblemOthersText: $('#fam_problem_others_text').val(),
-            fitness: $('input[name="fitness"]:checked').val() || '',
-            fitnessSpecify: $('#fitness_specify').val(),
-            fitnessFrequency: $('input[name="fitness_frequency"]:checked').val() || '',
-            stress: $('input[name="stress"]:checked').val() || ''
-        };
-        
-        // Save condition checkbox states
-        fieldStates.conditionCheckboxes = {};
-        $('.condition-checkbox').each(function() {
-            fieldStates.conditionCheckboxes[this.id] = $(this).is(':checked');
-        });
-        
-        // Save problem checkbox states
-        fieldStates.problemCheckboxes = {};
-        $('.problem-checkbox').each(function() {
-            fieldStates.problemCheckboxes[this.id] = $(this).is(':checked');
-        });
-        
-        // Save family problem checkbox states
-        fieldStates.famProblemCheckboxes = {};
-        $('.fam-problem-checkbox').each(function() {
-            fieldStates.famProblemCheckboxes[this.id] = $(this).is(':checked');
-        });
-        
-        sessionStorage.setItem('medicalFormStates', JSON.stringify(fieldStates));
-    }
-
-    // Function to check for existing signature
-    function hasExistingSignature() {
-        var canvas = document.getElementById('signatureCanvas');
-        var ctx = canvas.getContext('2d');
-        var pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-        
-        // Check if the canvas has any non-transparent pixels
-        for (var i = 3; i < pixelData.length; i += 4) {
-            if (pixelData[i] > 0) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // Update the updateConditionsHiddenField function
+    // Update hidden fields for conditions
     function updateConditionsHiddenField() {
         let conditions = [];
         let hasAnyCondition = false;
         
-        // Medical conditions
         if ($('#no_medical_list').is(':checked') && 
             !$('#allergy').val().trim() && 
             !$('#scoliosis').val().trim() && 
@@ -768,40 +633,73 @@ $(document).ready(function() {
             !$('#other_conditions').val().trim()) {
             conditions.push('NO MEDICAL CONDITIONS');
         } else {
-            // Add checked conditions
             $('.condition-checkbox:checked').each(function() {
                 conditions.push($(this).val());
                 hasAnyCondition = true;
             });
             
-            // Add other conditions if specified
             let otherConditions = $('#other_conditions').val().trim();
             if (otherConditions) {
                 conditions.push('Other: ' + otherConditions);
                 hasAnyCondition = true;
             }
             
-            // Add allergies if specified
             let allergy = $('#allergy').val().trim();
-            if (allergy) {
+            if (allergy && !$('#no_allergies').is(':checked')) {
                 conditions.push('Allergy: ' + allergy);
                 hasAnyCondition = true;
             }
             
-            // Add physical conditions if specified
             let scoliosis = $('#scoliosis').val().trim();
-            if (scoliosis) {
+            if (scoliosis && !$('#no_physical_conditions').is(':checked')) {
                 conditions.push('Scoliosis/Physical condition: ' + scoliosis);
                 hasAnyCondition = true;
             }
         }
         
-        // Filter out any empty values and join with semicolons
         $('#conditions_hidden').val(conditions.filter(Boolean).join('; '));
     }
 
+    // Update hidden fields for problems (both personal and family)
+    function updateProblemsHiddenField(isFamily) {
+        const prefix = isFamily ? 'fam_' : '';
+        let problems = [];
+        
+        if ($(`#${prefix}no_problems`).is(':checked')) {
+            problems.push('NO PROBLEMS');
+        } else {
+            $(`.${prefix}problem-checkbox:checked`).each(function() {
+                if ($(this).val() === 'Others') {
+                    const othersText = $(`#${prefix}problem_others_text`).val().trim();
+                    if (othersText) {
+                        problems.push('Others: ' + othersText);
+                    }
+                } else {
+                    problems.push($(this).val());
+                }
+            });
+        }
+        
+        $(`#${prefix}problems_hidden`).val(problems.filter(Boolean).join('; '));
+    }
+
+    // Form validation functions
+    function validateForm() {
+        let isValid = true;
+        
+        if (!validateMedications()) isValid = false;
+        if (!validateConditions()) isValid = false;
+        if (!validateSuicide()) isValid = false;
+        if (!validateProblems()) isValid = false;
+        if (!validateFamilyProblems()) isValid = false;
+        if (!validateFitness()) isValid = false;
+        if (!validateStress()) isValid = false;
+        
+        return isValid;
+    }
+
     function validateMedications() {
-        if ($('#no_medications').is(':checked') || $('#medications').val().trim() !== '') {
+        if ($('#no_medications').is(':checked') || $('#medications').val().trim()) {
             $('#medications').removeClass('is-invalid');
             return true;
         } else {
@@ -813,7 +711,6 @@ $(document).ready(function() {
     function validateConditions() {
         let isValid = true;
         
-        // Validate Medical Conditions section
         if (!$('#no_medical_list').is(':checked') && 
             $('.condition-checkbox:checked').length === 0 && 
             $('#other_conditions').val().trim() === '') {
@@ -823,58 +720,20 @@ $(document).ready(function() {
             $('.medical-conditions-group').removeClass('is-invalid');
         }
         
-        // Validate Allergies section
-        if (!$('#no_allergies').is(':checked') && 
-            $('#allergy').val().trim() === '') {
+        if (!$('#no_allergies').is(':checked') && $('#allergy').val().trim() === '') {
             $('.allergy-group').addClass('is-invalid');
             isValid = false;
         } else {
             $('.allergy-group').removeClass('is-invalid');
         }
         
-        // Validate Physical Conditions section
-        if (!$('#no_physical_conditions').is(':checked') && 
-            $('#scoliosis').val().trim() === '') {
+        if (!$('#no_physical_conditions').is(':checked') && $('#scoliosis').val().trim() === '') {
             $('.physical-condition-group').addClass('is-invalid');
             isValid = false;
         } else {
             $('.physical-condition-group').removeClass('is-invalid');
         }
         
-        return isValid;
-    }
-
-    function validateForm() {
-        var isValid = true;
-
-        if (!validateMedications()) {
-            isValid = false;
-        }
-
-        if (!validateConditions()) {
-            isValid = false;
-        }
-
-        if (!validateSuicide()) {
-            isValid = false;
-        }
-
-        if (!validateProblems()) {
-            isValid = false;
-        }
-
-        if (!validateFamilyProblems()) {
-            isValid = false;
-        }
-
-        if (!validateFitness()) {
-            isValid = false;
-        }
-
-        if (!validateStress()) {
-            isValid = false;
-        }
-
         return isValid;
     }
 
@@ -905,7 +764,6 @@ $(document).ready(function() {
             return false;
         }
 
-        // Check if Others is checked but text field is empty
         if ($('#problem_others').is(':checked') && !$('#problem_others_text').val().trim()) {
             $('#problem_others_text').addClass('is-invalid');
             return false;
@@ -928,7 +786,6 @@ $(document).ready(function() {
             return false;
         }
 
-        // Check if Others is checked but text field is empty
         if ($('#fam_problem_others').is(':checked') && !$('#fam_problem_others_text').val().trim()) {
             $('#fam_problem_others_text').addClass('is-invalid');
             return false;
@@ -969,547 +826,302 @@ $(document).ready(function() {
             return false;
         }
     }
-    
-    // Initial updates and validations
-    updateConditionsHiddenField();
 
-    // Initialize problems hidden fields
-    updateProblemsHiddenField(false);
-    updateProblemsHiddenField(true);
-    
-    validateMedications();
-    validateConditions();
-    
-    // Get session data from PHP and populate form
-    const sessionData = <?php echo isset($_SESSION['medical_history']) ? json_encode($_SESSION['medical_history']) : 'null'; ?>;
-    if (sessionData) {
-        populateFormFromSession(sessionData);
-    }
-    
-    // Restore field states from session storage if available
-    const savedFieldStates = sessionStorage.getItem('medicalFormStates');
-    if (savedFieldStates) {
-        const fieldStates = JSON.parse(savedFieldStates);
-        applyFieldStates(fieldStates);
-    }
-});
+    // Save field states to session storage
+    function saveFieldStates() {
+        const fieldStates = {
+            noMedications: $('#no_medications').is(':checked'),
+            medications: $('#medications').val(),
+            noMedicalList: $('#no_medical_list').is(':checked'),
+            conditionCheckboxes: {},
+            otherConditions: $('#other_conditions').val(),
+            noAllergies: $('#no_allergies').is(':checked'),
+            allergy: $('#allergy').val(),
+            noPhysicalConditions: $('#no_physical_conditions').is(':checked'),
+            scoliosis: $('#scoliosis').val(),
+            suicide: $('input[name="suicide"]:checked').val(),
+            suicideReason: $('#suicide_reason').val(),
+            noProblems: $('#no_problems').is(':checked'),
+            problemCheckboxes: {},
+            problemOthersChecked: $('#problem_others').is(':checked'),
+            problemOthersText: $('#problem_others_text').val(),
+            famNoProblems: $('#fam_no_problems').is(':checked'),
+            famProblemCheckboxes: {},
+            famProblemOthersChecked: $('#fam_problem_others').is(':checked'),
+            famProblemOthersText: $('#fam_problem_others_text').val(),
+            fitness: $('input[name="fitness"]:checked').val(),
+            fitnessSpecify: $('#fitness_specify').val(),
+            fitnessFrequency: $('input[name="fitness_frequency"]:checked').val(),
+            stress: $('input[name="stress"]:checked').val(),
+            signature: $('#signatureData').val()
+        };
 
-// Function to apply saved field states
-function applyFieldStates(fieldStates) {
-    if (!fieldStates) return;
-    
-    // Apply medications state
-    if (fieldStates.noMedications) {
-        $('#no_medications').prop('checked', true);
-        $('#medications').val(fieldStates.medications || 'NO MEDICATIONS').prop('readonly', true);
-    } else if (fieldStates.medications) {
-        $('#medications').val(fieldStates.medications);
+        // Save condition checkbox states
+        $('.condition-checkbox').each(function() {
+            fieldStates.conditionCheckboxes[this.id] = $(this).is(':checked');
+        });
+
+        // Save problem checkbox states
+        $('.problem-checkbox').each(function() {
+            fieldStates.problemCheckboxes[this.id] = $(this).is(':checked');
+        });
+
+        // Save family problem checkbox states
+        $('.fam-problem-checkbox').each(function() {
+            fieldStates.famProblemCheckboxes[this.id] = $(this).is(':checked');
+        });
+
+        sessionStorage.setItem('medicalFormStates', JSON.stringify(fieldStates));
     }
-    
-    // Apply medical conditions state
-    if (fieldStates.noMedicalList) {
-        $('#no_medical_list').prop('checked', true);
-        $('.condition-checkbox').prop('disabled', true).prop('checked', false);
-        $('#other_conditions').prop('readonly', true).val('');
-        $('.condition-options').addClass('text-muted');
-    } else if (fieldStates.conditionCheckboxes) {
-        // Restore individual checkbox states
-        for (const [id, checked] of Object.entries(fieldStates.conditionCheckboxes)) {
-            $(`#${id}`).prop('checked', checked);
+
+    // Apply saved field states
+    function applyFieldStates(fieldStates) {
+        if (!fieldStates) return;
+
+        // Apply medications state
+        if (fieldStates.noMedications) {
+            $('#no_medications').prop('checked', true).trigger('change');
+            $('#medications').val(fieldStates.medications || 'NO MEDICATIONS');
+        } else if (fieldStates.medications) {
+            $('#medications').val(fieldStates.medications);
         }
-    }
-    
-    // Apply allergies state
-    if (fieldStates.noAllergies) {
-        $('#no_allergies').prop('checked', true);
-        $('#allergy').prop('readonly', true).val('');
-        $('.allergy-input').addClass('text-muted');
-    }
-    
-    // Apply physical conditions state
-    if (fieldStates.noPhysicalConditions) {
-        $('#no_physical_conditions').prop('checked', true);
-        $('#scoliosis').prop('readonly', true).val('');
-        $('.physical-input').addClass('text-muted');
-    }
-    
-    // Apply suicide state
-    if (fieldStates.suicide) {
-        $(`input[name="suicide"][value="${fieldStates.suicide}"]`).prop('checked', true);
-        if (fieldStates.suicide === 'yes') {
-            $('#suicide_reason_container').show();
-            $('#suicide_reason').prop('readonly', false).val(fieldStates.suicideReason || '');
+
+        // Apply medical conditions state
+        if (fieldStates.noMedicalList) {
+            $('#no_medical_list').prop('checked', true).trigger('change');
         } else {
-            $('#suicide_reason_container').hide();
-            $('#suicide_reason').prop('readonly', true).val('');
+            for (const [id, checked] of Object.entries(fieldStates.conditionCheckboxes || {})) {
+                $(`#${id}`).prop('checked', checked);
+            }
+            if (fieldStates.otherConditions) {
+                $('#other_conditions').val(fieldStates.otherConditions);
+            }
         }
-    }
-    
-    // Apply problems state
-    if (fieldStates.noProblems) {
-        $('#no_problems').prop('checked', true);
-        $('.problem-checkbox').prop('disabled', true).prop('checked', false);
-        $('#problem_others_text').prop('readonly', true).val('').hide();
-        $('.problem-options').addClass('text-muted');
-    } else if (fieldStates.problemCheckboxes) {
-        // Restore individual checkbox states
-        for (const [id, checked] of Object.entries(fieldStates.problemCheckboxes)) {
-            $(`#${id}`).prop('checked', checked);
+
+        // Apply allergies state
+        if (fieldStates.noAllergies) {
+            $('#no_allergies').prop('checked', true).trigger('change');
+        } else if (fieldStates.allergy) {
+            $('#allergy').val(fieldStates.allergy);
         }
-        
-        if (fieldStates.problemOthersChecked) {
-            $('#problem_others').prop('checked', true);
-            $('#problem_others_text').prop('readonly', false).val(fieldStates.problemOthersText || '').show();
+
+        // Apply physical conditions state
+        if (fieldStates.noPhysicalConditions) {
+            $('#no_physical_conditions').prop('checked', true).trigger('change');
+        } else if (fieldStates.scoliosis) {
+            $('#scoliosis').val(fieldStates.scoliosis);
         }
-    }
-    
-    // Apply family problems state
-    if (fieldStates.famNoProblems) {
-        $('#fam_no_problems').prop('checked', true);
-        $('.fam-problem-checkbox').prop('disabled', true).prop('checked', false);
-        $('#fam_problem_others_text').prop('readonly', true).val('').hide();
-        $('.fam-problem-options').addClass('text-muted');
-    } else if (fieldStates.famProblemCheckboxes) {
-        // Restore individual checkbox states
-        for (const [id, checked] of Object.entries(fieldStates.famProblemCheckboxes)) {
-            $(`#${id}`).prop('checked', checked);
+
+        // Apply suicide state
+        if (fieldStates.suicide) {
+            $(`input[name="suicide"][value="${fieldStates.suicide}"]`).prop('checked', true).trigger('change');
+            if (fieldStates.suicideReason) {
+                $('#suicide_reason').val(fieldStates.suicideReason);
+            }
         }
-        
-        if (fieldStates.famProblemOthersChecked) {
-            $('#fam_problem_others').prop('checked', true);
-            $('#fam_problem_others_text').prop('readonly', false).val(fieldStates.famProblemOthersText || '').show();
+
+        // Apply problems state
+        if (fieldStates.noProblems) {
+            $('#no_problems').prop('checked', true).trigger('change');
+        } else {
+            for (const [id, checked] of Object.entries(fieldStates.problemCheckboxes || {})) {
+                $(`#${id}`).prop('checked', checked);
+            }
+            if (fieldStates.problemOthersChecked) {
+                $('#problem_others').prop('checked', true).trigger('change');
+                $('#problem_others_text').val(fieldStates.problemOthersText || '');
+            }
         }
-    }
-    
-    // Apply fitness state
-    if (fieldStates.fitness) {
-        $(`input[name="fitness"][value="${fieldStates.fitness}"]`).prop('checked', true);
-        if (fieldStates.fitness === 'yes') {
-            $('#fitness_specify').prop('disabled', false).val(fieldStates.fitnessSpecify || '');
-            $('input[name="fitness_frequency"]').prop('disabled', false);
+
+        // Apply family problems state
+        if (fieldStates.famNoProblems) {
+            $('#fam_no_problems').prop('checked', true).trigger('change');
+        } else {
+            for (const [id, checked] of Object.entries(fieldStates.famProblemCheckboxes || {})) {
+                $(`#${id}`).prop('checked', checked);
+            }
+            if (fieldStates.famProblemOthersChecked) {
+                $('#fam_problem_others').prop('checked', true).trigger('change');
+                $('#fam_problem_others_text').val(fieldStates.famProblemOthersText || '');
+            }
+        }
+
+        // Apply fitness state
+        if (fieldStates.fitness) {
+            $(`input[name="fitness"][value="${fieldStates.fitness}"]`).prop('checked', true).trigger('change');
+            if (fieldStates.fitnessSpecify) {
+                $('#fitness_specify').val(fieldStates.fitnessSpecify);
+            }
             if (fieldStates.fitnessFrequency) {
                 $(`input[name="fitness_frequency"][value="${fieldStates.fitnessFrequency}"]`).prop('checked', true);
             }
-        } else {
-            $('#fitness_specify').prop('disabled', true).val('');
-            $('input[name="fitness_frequency"]').prop('disabled', true).prop('checked', false);
+        }
+
+        // Apply stress state
+        if (fieldStates.stress) {
+            $(`input[name="stress"][value="${fieldStates.stress}"]`).prop('checked', true);
+        }
+
+        // Apply signature if exists
+        if (fieldStates.signature) {
+            $('#signatureData').val(fieldStates.signature);
         }
     }
-    
-    // Apply stress state
-    if (fieldStates.stress) {
-        $(`input[name="stress"][value="${fieldStates.stress}"]`).prop('checked', true);
-    }
-    
-    // Update hidden fields after all states are applied
-    updateConditionsHiddenField();
-    updateProblemsHiddenField(false);
-    updateProblemsHiddenField(true);
-}
 
-// Problems section JavaScript (both self and family)
-document.addEventListener('DOMContentLoaded', function() {
-    // Self problems
-    const problemCheckboxes = document.querySelectorAll('.problem-checkbox');
-    const noProblemsCheckbox = document.getElementById('no_problems');
-    const problemsHidden = document.getElementById('problems_hidden');
-    const problemOthersText = document.getElementById('problem_others_text');
-    const problemOthersCheckbox = document.getElementById('problem_others');
-
-    // Family problems
-    const famProblemCheckboxes = document.querySelectorAll('.fam-problem-checkbox');
-    const famNoProblemsCheckbox = document.getElementById('fam_no_problems');
-    const famProblemsHidden = document.getElementById('fam_problems_hidden');
-    const famProblemOthersText = document.getElementById('fam_problem_others_text');
-    const famProblemOthersCheckbox = document.getElementById('fam_problem_others');
-
-    function updateProblemsHiddenField(isFamily = false) {
-        const checkboxes = isFamily ? famProblemCheckboxes : problemCheckboxes;
-        const noProblems = isFamily ? famNoProblemsCheckbox : noProblemsCheckbox;
-        const hiddenField = isFamily ? famProblemsHidden : problemsHidden;
-        const othersText = isFamily ? famProblemOthersText : problemOthersText;
-        const othersCheckbox = isFamily ? famProblemOthersCheckbox : problemOthersCheckbox;
-        
-        if (noProblems.checked) {
-            hiddenField.value = 'NO PROBLEMS';
-            // Disable all problem checkboxes
-            checkboxes.forEach(cb => {
-                cb.disabled = true;
-                cb.checked = false;
-            });
-            // Disable and clear the Others text field
-            othersText.disabled = true;
-            othersText.value = '';
-            othersText.readonly = true;
-        } else {
-            const selectedProblems = Array.from(checkboxes)
-                .filter(cb => cb.checked)
-                .map(cb => {
-                    if (cb.value === 'Others' && othersText.value.trim()) {
-                        return `Others: ${othersText.value.trim()}`;
-                    }
-                    return cb.value !== 'Others' ? cb.value : '';
-                })
-                .filter(value => value !== '');
-            
-            hiddenField.value = selectedProblems.length > 0 ? selectedProblems.join('; ') : '';
-            
-            // Enable all problem checkboxes
-            checkboxes.forEach(cb => {
-                cb.disabled = false;
-            });
-            
-            // Enable the Others text field if Others checkbox is checked
-            if (othersCheckbox.checked) {
-                othersText.disabled = false;
-                othersText.readonly = false;
-            }
-        }
-        // Save field states after update
+    // Handle previous button click
+    function handlePrevious() {
         saveFieldStates();
-    }
-
-    function toggleProblemCheckboxes(disabled, isFamily = false) {
-        const checkboxes = isFamily ? famProblemCheckboxes : problemCheckboxes;
-        const othersText = isFamily ? famProblemOthersText : problemOthersText;
-        const optionsContainer = isFamily ? $('.fam-problem-options') : $('.problem-options');
         
-        checkboxes.forEach(cb => {
-            cb.disabled = disabled;
-            if (disabled) {
-                cb.checked = false;
+        // Enable any disabled fields before collecting form data
+        var disabledFields = $('#medicalHistoryForm').find(':disabled').prop('disabled', false);
+        var readonlyFields = $('#medicalHistoryForm').find('[readonly]').prop('readonly', false);
+        
+        // Create form data object
+        const formData = new FormData(document.getElementById('medicalHistoryForm'));
+        
+        // Add signature if exists
+        if (!signaturePad.isEmpty()) {
+            formData.set('signature', signaturePad.toDataURL());
+        }
+        
+        // Use fetch to submit the form data
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
             }
-        });
-        
-        othersText.disabled = disabled;
-        othersText.readonly = disabled;
-        if (disabled) {
-            othersText.value = '';
-        }
-        
-        if (disabled) {
-            optionsContainer.addClass('text-muted');
-        } else {
-            optionsContainer.removeClass('text-muted');
-        }
-        
-        // Save field states after toggling
-        saveFieldStates();
-    }
-
-    // Event listeners for self problems
-    noProblemsCheckbox.addEventListener('change', function() {
-        toggleProblemCheckboxes(this.checked, false);
-        if (!this.checked) {
-            // Enable all checkboxes when unchecked
-            $('.problem-checkbox').prop('disabled', false);
-            $('#problem_others_text').prop('readonly', false);
-            $('.problem-options').removeClass('text-muted');
-        }
-        updateProblemsHiddenField(false);
-    });
-
-    problemCheckboxes.forEach(cb => {
-        cb.addEventListener('change', function() {
-            if (this.checked) {
-                noProblemsCheckbox.checked = false;
-                toggleProblemCheckboxes(false, false);
-                
-                // Special handling for Others checkbox
-                if (this.value === 'Others') {
-                    $('#problem_others_text').prop('readonly', false).show();
-                }
-            } else if (this.value === 'Others') {
-                // Hide/disable Others text if unchecked
-                $('#problem_others_text').prop('readonly', true).hide();
-            }
-            updateProblemsHiddenField(false);
-        });
-    });
-
-    // Event listeners for family problems
-    famNoProblemsCheckbox.addEventListener('change', function() {
-        toggleProblemCheckboxes(this.checked, true);
-        if (!this.checked) {
-            // Enable all checkboxes when unchecked
-            $('.fam-problem-checkbox').prop('disabled', false);
-            $('#fam_problem_others_text').prop('readonly', false);
-            $('.fam-problem-options').removeClass('text-muted');
-        }
-        updateProblemsHiddenField(true);
-    });
-
-    famProblemCheckboxes.forEach(cb => {
-        cb.addEventListener('change', function() {
-            if (this.checked) {
-                famNoProblemsCheckbox.checked = false;
-                toggleProblemCheckboxes(false, true);
-                
-                // Special handling for Others checkbox
-                if (this.value === 'Others') {
-                    $('#fam_problem_others_text').prop('readonly', false).show();
-                }
-            } else if (this.value === 'Others') {
-                // Hide/disable Others text if unchecked
-                $('#fam_problem_others_text').prop('readonly', true).hide();
-            }
-            updateProblemsHiddenField(true);
-        });
-    });
-
-    problemOthersText.addEventListener('input', function() {
-        if (this.value) {
-            problemOthersCheckbox.checked = true;
-            noProblemsCheckbox.checked = false;
-            toggleProblemCheckboxes(false, false);
-        }
-        updateProblemsHiddenField(false);
-    });
-
-    famProblemOthersText.addEventListener('input', function() {
-        if (this.value) {
-            famProblemOthersCheckbox.checked = true;
-            famNoProblemsCheckbox.checked = false;
-            toggleProblemCheckboxes(false, true);
-        }
-        updateProblemsHiddenField(true);
-    });
-
-    // Initial updates
-    updateProblemsHiddenField(false);
-    updateProblemsHiddenField(true);
-});
-
-// Function to populate form fields from session data
-function populateFormFromSession(sessionData) {
-    if (!sessionData) return;
-
-    // Medications
-    if (sessionData.no_medications) {
-        $('#no_medications').prop('checked', true).trigger('change');
-    } else if (sessionData.medications) {
-        $('#medications').val(sessionData.medications);
-    }
-
-    // Medical conditions
-    if (sessionData.no_medical_list) {
-        $('#no_medical_list').prop('checked', true).trigger('change');
-    } else if (sessionData.conditions) {
-        const conditions = Array.isArray(sessionData.conditions) 
-            ? sessionData.conditions 
-            : (typeof sessionData.conditions === 'string' ? sessionData.conditions.split('; ') : []);
-            
-        conditions.forEach(condition => {
-            if (condition.startsWith('Other:')) {
-                $('#other_conditions').val(condition.replace('Other: ', ''));
-            } else if (condition.startsWith('Allergy:')) {
-                $('#allergy').val(condition.replace('Allergy: ', ''));
-            } else if (condition.startsWith('Scoliosis/Physical condition:')) {
-                $('#scoliosis').val(condition.replace('Scoliosis/Physical condition: ', ''));
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = 'educational_career.php';
             } else {
-                // Find and check the checkbox with this value
-                $(`.condition-checkbox[value="${condition}"]`).prop('checked', true);
+                throw new Error('Network response was not ok');
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('There was an error saving your data. Please try again.');
+            
+            // Re-disable fields if there's an error
+            disabledFields.prop('disabled', true);
+            readonlyFields.prop('readonly', true);
         });
     }
 
-    // Allergies
-    if (sessionData.no_allergies) {
-        $('#no_allergies').prop('checked', true).trigger('change');
-    } else if (sessionData.allergy) {
-        $('#allergy').val(sessionData.allergy);
-    }
-
-    // Physical conditions
-    if (sessionData.no_physical_conditions) {
-        $('#no_physical_conditions').prop('checked', true).trigger('change');
-    } else if (sessionData.scoliosis) {
-        $('#scoliosis').val(sessionData.scoliosis);
-    }
-
-    // Suicide
-    if (sessionData.suicide) {
-        $(`input[name="suicide"][value="${sessionData.suicide}"]`).prop('checked', true).trigger('change');
-        if (sessionData.suicide === 'yes' && sessionData.suicide_reason) {
-            $('#suicide_reason').val(sessionData.suicide_reason);
+    // Initialize form from session data
+    const sessionData = <?php echo isset($_SESSION['medical_history']) ? json_encode($_SESSION['medical_history']) : '{}'; ?>;
+    if (sessionData) {
+        if (sessionData.no_medications) {
+            $('#no_medications').prop('checked', true).trigger('change');
+            $('#medications').val('NO MEDICATIONS');
+        } else if (sessionData.medications) {
+            $('#medications').val(sessionData.medications);
         }
-    }
 
-    // Problems (self)
-    if (sessionData.no_problems) {
-        $('#no_problems').prop('checked', true).trigger('change');
-    } else if (sessionData.problems) {
-        const problems = Array.isArray(sessionData.problems) 
-            ? sessionData.problems 
-            : (typeof sessionData.problems === 'string' ? sessionData.problems.split('; ') : []);
+        if (sessionData.no_medical_list) {
+            $('#no_medical_list').prop('checked', true).trigger('change');
+        } else if (sessionData.conditions) {
+            const conditions = Array.isArray(sessionData.conditions) ? 
+                sessionData.conditions : 
+                sessionData.conditions.split('; ');
+            
+            conditions.forEach(condition => {
+                if (condition.startsWith('Other:')) {
+                    $('#other_conditions').val(condition.replace('Other: ', ''));
+                } else if (condition.startsWith('Allergy:')) {
+                    $('#allergy').val(condition.replace('Allergy: ', ''));
+                } else if (condition.startsWith('Scoliosis/Physical condition:')) {
+                    $('#scoliosis').val(condition.replace('Scoliosis/Physical condition: ', ''));
+                } else {
+                    $(`.condition-checkbox[value="${condition}"]`).prop('checked', true);
+                }
+            });
+        }
+
+        if (sessionData.no_allergies) {
+            $('#no_allergies').prop('checked', true).trigger('change');
+        } else if (sessionData.allergy) {
+            $('#allergy').val(sessionData.allergy);
+        }
+
+        if (sessionData.no_physical_conditions) {
+            $('#no_physical_conditions').prop('checked', true).trigger('change');
+        } else if (sessionData.scoliosis) {
+            $('#scoliosis').val(sessionData.scoliosis);
+        }
+
+        if (sessionData.suicide) {
+            $(`input[name="suicide"][value="${sessionData.suicide}"]`).prop('checked', true).trigger('change');
+            if (sessionData.suicide_reason) {
+                $('#suicide_reason').val(sessionData.suicide_reason);
+            }
+        }
+
+        if (sessionData.no_problems) {
+            $('#no_problems').prop('checked', true).trigger('change');
+        } else if (sessionData.problems) {
+            const problems = Array.isArray(sessionData.problems) ? 
+                sessionData.problems : 
+                sessionData.problems.split('; ');
+                
             problems.forEach(problem => {
-            if (problem.startsWith('Others:')) {
-                $('#problem_others').prop('checked', true);
-                $('#problem_others_text').val(problem.replace('Others: ', '')).prop('readonly', false).show();
-            } else {
-                // Find the checkbox with this value and check it
-                $(`.problem-checkbox[value="${problem}"]`).prop('checked', true);
-            }
-        });
-        // Ensure "No problems" is unchecked
-        $('#no_problems').prop('checked', false);
-        // Enable the problem options
-        $('.problem-checkbox').prop('disabled', false);
-        $('#problem_others_text').prop('readonly', false);
-        $('.problem-options').removeClass('text-muted');
-    }
+                if (problem.startsWith('Others:')) {
+                    $('#problem_others').prop('checked', true);
+                    $('#problem_others_text').val(problem.replace('Others: ', '')).show();
+                } else {
+                    $(`.problem-checkbox[value="${problem}"]`).prop('checked', true);
+                }
+            });
+        }
 
-    // Problems (family)
-    if (sessionData.fam_no_problems) {
-        $('#fam_no_problems').prop('checked', true).trigger('change');
-    } else if (sessionData.fam_problems) {
-        const famProblems = Array.isArray(sessionData.fam_problems) 
-            ? sessionData.fam_problems 
-            : (typeof sessionData.fam_problems === 'string' ? sessionData.fam_problems.split('; ') : []);
-            
-        famProblems.forEach(problem => {
-            if (problem.startsWith('Others:')) {
-                $('#fam_problem_others').prop('checked', true);
-                $('#fam_problem_others_text').val(problem.replace('Others: ', '')).prop('readonly', false).show();
-            } else {
-                // Find the checkbox with this value and check it
-                $(`.fam-problem-checkbox[value="${problem}"]`).prop('checked', true);
-            }
-        });
-        // Ensure "No problems" is unchecked
-        $('#fam_no_problems').prop('checked', false);
-        // Enable the problem options
-        $('.fam-problem-checkbox').prop('disabled', false);
-        $('#fam_problem_others_text').prop('readonly', false);
-        $('.fam-problem-options').removeClass('text-muted');
-    }
+        if (sessionData.fam_no_problems) {
+            $('#fam_no_problems').prop('checked', true).trigger('change');
+        } else if (sessionData.fam_problems) {
+            const famProblems = Array.isArray(sessionData.fam_problems) ? 
+                sessionData.fam_problems : 
+                sessionData.fam_problems.split('; ');
+                
+            famProblems.forEach(problem => {
+                if (problem.startsWith('Others:')) {
+                    $('#fam_problem_others').prop('checked', true);
+                    $('#fam_problem_others_text').val(problem.replace('Others: ', '')).show();
+                } else {
+                    $(`.fam-problem-checkbox[value="${problem}"]`).prop('checked', true);
+                }
+            });
+        }
 
-    // Fitness
-    if (sessionData.fitness) {
-        $(`input[name="fitness"][value="${sessionData.fitness}"]`).prop('checked', true).trigger('change');
-        if (sessionData.fitness === 'yes') {
+        if (sessionData.fitness) {
+            $(`input[name="fitness"][value="${sessionData.fitness}"]`).prop('checked', true).trigger('change');
             if (sessionData.fitness_specify) {
-                $('#fitness_specify').val(sessionData.fitness_specify).prop('disabled', false);
+                $('#fitness_specify').val(sessionData.fitness_specify);
             }
             if (sessionData.fitness_frequency) {
                 $(`input[name="fitness_frequency"][value="${sessionData.fitness_frequency}"]`).prop('checked', true);
-                $('input[name="fitness_frequency"]').prop('disabled', false);
             }
         }
-    }
 
-    // Stress
-    if (sessionData.stress) {
-        $(`input[name="stress"][value="${sessionData.stress}"]`).prop('checked', true);
-    }
-    
-    // Signature (if available)
-    if (sessionData.signature) {
-        $('#signatureData').val(sessionData.signature);
-        
-        // Display the signature on the canvas
-        const image = new Image();
-        image.onload = function() {
-            const canvas = document.getElementById('signatureCanvas');
-            const context = canvas.getContext('2d');
-            context.drawImage(image, 0, 0);
-            // Update the signature pad's internal state
-            signaturePad._isEmpty = false;
-        };
-        image.src = sessionData.signature;
-    }
-    
-    // After setting form values, save the state to sessionStorage
-    saveFieldStates();
-}
-
-function handlePrevious() {
-    // Save the current state of all fields to session storage
-    saveFieldStates();
-    
-    // Enable any disabled fields before collecting form data
-    var disabledFields = $('#medicalHistoryForm').find(':disabled').prop('disabled', false);
-    var readonlyFields = $('#medicalHistoryForm').find('[readonly]').prop('readonly', false);
-    
-    // Create form data object
-    const formData = new FormData(document.getElementById('medicalHistoryForm'));
-    
-    // Add signature if exists
-    if (!signaturePad.isEmpty()) {
-        formData.append('signature', signaturePad.toDataURL());
-    }
-    
-    // Use fetch to submit the form data
-    fetch(window.location.href, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+        if (sessionData.stress) {
+            $(`input[name="stress"][value="${sessionData.stress}"]`).prop('checked', true);
         }
-    })
-    .then(response => {
-        if (response.ok) {
-            // After successful save, navigate to previous page
-            window.location.href = 'educational_career.php';
-        } else {
-            throw new Error('Network response was not ok');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('There was an error saving your data. Please try again.');
-        
-        // Re-disable fields if there's an error
-        disabledFields.prop('disabled', true);
-        readonlyFields.prop('readonly', true);
-    });
-}
 
-// Function to save all field states to session storage
-function saveFieldStates() {
-    const fieldStates = {
-        noMedications: $('#no_medications').is(':checked'),
-        medications: $('#medications').val(),
-        conditionCheckboxesDisabled: $('.condition-checkbox').first().is(':disabled'),
-        noMedicalList: $('#no_medical_list').is(':checked'),
-        noAllergies: $('#no_allergies').is(':checked'),
-        noPhysicalConditions: $('#no_physical_conditions').is(':checked'),
-        suicide: $('input[name="suicide"]:checked').val() || '',
-        suicideReason: $('#suicide_reason').val(),
-        noProblems: $('#no_problems').is(':checked'),
-        problemCheckboxesDisabled: $('.problem-checkbox').first().is(':disabled'),
-        problemOthersChecked: $('#problem_others').is(':checked'),
-        problemOthersText: $('#problem_others_text').val(),
-        famNoProblems: $('#fam_no_problems').is(':checked'),
-        famProblemCheckboxesDisabled: $('.fam-problem-checkbox').first().is(':disabled'),
-        famProblemOthersChecked: $('#fam_problem_others').is(':checked'),
-        famProblemOthersText: $('#fam_problem_others_text').val(),
-        fitness: $('input[name="fitness"]:checked').val() || '',
-        fitnessSpecify: $('#fitness_specify').val(),
-        fitnessFrequency: $('input[name="fitness_frequency"]:checked').val() || '',
-        stress: $('input[name="stress"]:checked').val() || ''
-    };
-    
-    // Save condition checkbox states
-    fieldStates.conditionCheckboxes = {};
-    $('.condition-checkbox').each(function() {
-        fieldStates.conditionCheckboxes[this.id] = $(this).is(':checked');
-    });
-    
-    // Save problem checkbox states
-    fieldStates.problemCheckboxes = {};
-    $('.problem-checkbox').each(function() {
-        fieldStates.problemCheckboxes[this.id] = $(this).is(':checked');
-    });
-    
-    // Save family problem checkbox states
-    fieldStates.famProblemCheckboxes = {};
-    $('.fam-problem-checkbox').each(function() {
-        fieldStates.famProblemCheckboxes[this.id] = $(this).is(':checked');
-    });
-    
-    sessionStorage.setItem('medicalFormStates', JSON.stringify(fieldStates));
-}
+        if (sessionData.signature) {
+            $('#signatureData').val(sessionData.signature);
+        }
+    }
+
+    // Apply saved field states from sessionStorage if available
+    const savedFieldStates = sessionStorage.getItem('medicalFormStates');
+    if (savedFieldStates) {
+        applyFieldStates(JSON.parse(savedFieldStates));
+    }
+
+    // Initial updates
+    updateConditionsHiddenField();
+    updateProblemsHiddenField(false);
+    updateProblemsHiddenField(true);
+});
 </script>
 </body>
 </html>

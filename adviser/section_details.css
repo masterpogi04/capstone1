@@ -523,7 +523,7 @@ h3 {
                 transform-origin: 50% 50%;
             }
 
-            . .save-button:focus:not(:active)::after {
+            .save-button:focus:not(:active)::after {
                 animation: ripple 1s ease-out;
             }
 

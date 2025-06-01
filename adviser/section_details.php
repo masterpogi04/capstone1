@@ -39,7 +39,7 @@ if (isset($_POST['delete_student'])) {
     $check_violations_stmt->close();
 
     if ($unresolved_count > 0) {
-        $_SESSION['error_message'] = "Cannot delete student because they have unresolved violations (not Settled or Referred).";
+        $_SESSION['error_message'] = "Cannot disable this student because they have unresolved violations (not Settled or Referred).";
         echo "<script>window.location.href = 'section_details.php?section_id=" . $section_id . "';</script>";
         exit();
     }
@@ -646,7 +646,7 @@ if (isset($_SESSION['success_message'])) {
                                         onclick="openEditModal(this)"><i class="fas fa-pencil-alt"></i></button>
                                     <form method="post" style="display: inline;">
                                         <input type="hidden" name="student_id" value="<?php echo $student['student_id']; ?>">
-                                        <button type="submit" name="delete_student" class="btn btn-delete" onclick="return confirm('Are you sure you want to delete this student?')"><i class="fas fa-trash-alt"></i></button>
+                                        <button type="submit" name="delete_student" class="btn btn-delete" onclick="return confirm('Are you sure you want to disable this account?')"><i class="fas fa-ban"></i></button>
                                     </form>
                                 </td>
                             </tr>

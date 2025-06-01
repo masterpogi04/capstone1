@@ -684,15 +684,6 @@ if (isset($_SESSION['error_message'])) {
             background-color: #2980b9;
         }
 
-        .btn-danger {
-            background-color: #e74c3c;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background-color: #c0392b;
-        }
-
         .btn-success {
             background-color: #2ecc71;
             color: white;
@@ -1014,7 +1005,7 @@ if (isset($_SESSION['error_message'])) {
                             <!-- Replace the existing delete form with this -->
                             <form method="post" action="" class="delete-form">
                                 <button type="submit" class="btn btn-danger btn-sm p-0 m-0" title="Delete">
-                                    <i class="fas fa-trash-alt"></i>
+                                    <i class="fas fa-ban"></i>
                                 </button>
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="section_id" value="<?php echo $section['id']; ?>">
@@ -1174,12 +1165,12 @@ $(document).ready(function() {
         
         Swal.fire({
             title: 'Are you sure?',
-            text: "This will permanently delete the section and all associated students. This action cannot be undone!",
+            text: "This will permanently disable the section and all associated students. This action cannot be undone!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, delete it!',
+            confirmButtonText: 'Yes, disable it!',
             cancelButtonText: 'Cancel'
         }).then((result) => {
             if (result.isConfirmed) {
@@ -1221,7 +1212,7 @@ $(document).ready(function() {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error',
-                                text: data.message || 'Failed to delete section'
+                                text: data.message || 'Failed to disable section'
                             });
                         }
                     },
@@ -1230,7 +1221,7 @@ $(document).ready(function() {
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
-                            text: 'Failed to process delete request. Please try again.'
+                            text: 'Failed to process disable request. Please try again.'
                         });
                     }
                 });

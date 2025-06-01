@@ -89,9 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         die("Error: Course not found");
     }
 
-    // Generate a temporary profile ID with 'temp_' prefix
-    // This will be replaced with a permanent ID in review.php
-    $temp_profile_id = 'temp_' . $student_id . '_' . time();
+     // Generate profile ID
+    $profile_id = generateProfileId($connection);
 
     // Insert or update the data in the database
     $sql = "INSERT INTO student_profiles (
@@ -102,7 +101,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         spouse_name, spouse_occupation
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
-        profile_id = VALUES(profile_id),
         course_id = VALUES(course_id),
         last_name = VALUES(last_name),
         first_name = VALUES(first_name),
@@ -134,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     $stmt->bind_param("sssssssssssssssssissssssss",
-        $temp_profile_id,  // Use temporary profile ID
+        $profile_id,
         $student_id,
         $course_id,
         $_POST['last_name'],
@@ -163,10 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     );
 
     if ($stmt->execute()) {
-        // Store temporary profile ID in session for later reference
-        $_SESSION['temp_profile_id'] = $temp_profile_id;
-        
-        // We don't set $_SESSION['profile_id'] here anymore
+        $_SESSION['profile_id'] = $profile_id;
         header("Location: family_background.php");
         exit;
     } else {
@@ -282,14 +277,14 @@ if ($profile_data) {
 }
 
 function generateProfileId($connection) {
-    $query = "SELECT MAX(CAST(SUBSTRING(profile_id, 9) AS UNSIGNED)) as max_id FROM student_profiles WHERE profile_id LIKE 'Stu_pro_%'";
+    $query = "SELECT MAX(CAST(SUBSTRING(profile_id, 9) AS UNSIGNED)) as max_id FROM student_profiles";
     $result = $connection->query($query);
     $row = $result->fetch_assoc();
     $next_id = ($row['max_id'] ?? 0) + 1;
     return 'Stu_pro_' . str_pad($next_id, 9, '0', STR_PAD_LEFT);
 }
-?>
 
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -304,7 +299,6 @@ function generateProfileId($connection) {
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 </head>
 <body>
-    
 
     <div class="container mt-5">
         <div class="progress mb-3">
@@ -415,13 +409,13 @@ function generateProfileId($connection) {
                 </div>
                 <div class="form-row">
                    <div class="form-group col-md-6">
-                            <label for="contactNumber">Contact Number: *</label>
-                            <input type="tel" class="form-control" id="contactNumber" name="contactNumber"  
-                                   required placeholder="e.g 09123456789" pattern="[0-9]{11}" maxlength="11" 
-                                   title="Please enter a valid 11-digit phone number" 
-                                   oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);" value="<?php echo htmlspecialchars($formData['fieldName'] ?? ''); ?>">
-                            <small class="form-text text-muted">Please enter an 11-digit phone number.</small>
-                        </div>
+                    <label for="contactNumber">Contact Number: *</label>
+                    <input type="tel" class="form-control" id="contactNumber" name="contactNumber"  
+                           required placeholder="e.g 09123456789" pattern="[0-9]{11}" maxlength="11" 
+                           title="Please enter a valid 11-digit phone number" 
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);" value="<?php echo htmlspecialchars($formData['fieldName'] ?? ''); ?>">
+                    <small class="form-text text-muted">Please enter an 11-digit phone number.</small>
+                </div>
                     <div class="form-group col-md-6">
                         <label for="email">Email Address:</label>
                         <input type="email" class="form-control" id="email" name="email" value="<?php echo $student['email'] ?? ''; ?>" readonly>
@@ -555,30 +549,7 @@ function generateProfileId($connection) {
         </form>
     </div>
 
-<script>
-        // Define the formatPhoneNumber function globally
-        function formatPhoneNumber(input) {
-            // Remove non-digit characters
-            let value = input.value.replace(/\D/g, '');
-            
-            // Ensure it starts with '09'
-            if (!value.startsWith('09') && value.length > 0) {
-                if (value.startsWith('9')) {
-                    value = '0' + value;
-                } else {
-                    value = '09';
-                }
-            }
-            
-            // Limit to 11 digits
-            if (value.length > 11) {
-                value = value.substring(0, 11);
-            }
-            
-            // Update the input value
-            input.value = value;
-        }
-
+    <script>
         $(document).ready(function() {
             const birthdateInput = document.getElementById('birthdate');
             const today = new Date();
@@ -629,18 +600,6 @@ function generateProfileId($connection) {
             // Trigger change events on page load to handle pre-selected values
             $('#religion').trigger('change');
             $('#civilStatus').trigger('change');
-            
-            // Setup phone number formatting on page load
-            const contactNumberInput = document.getElementById('contactNumber');
-            if (contactNumberInput) {
-                // Initial format in case there's a value already
-                formatPhoneNumber(contactNumberInput);
-                
-                // Add event listener for input changes
-                contactNumberInput.addEventListener('input', function() {
-                    formatPhoneNumber(this);
-                });
-            }
         });
 
         $(document).ready(function() {
@@ -666,8 +625,7 @@ function generateProfileId($connection) {
 
                 $('#PermanentAddress').val(permanentAddress);
             }
-            
-            // City change event handler
+        // City change event handler
             $('#city').change(function() {
                 const selectedCity = $(this).val();
                 if (selectedCity) {
@@ -682,14 +640,14 @@ function generateProfileId($connection) {
                         data.forEach(function(barangay) {
                             barangaySelect.append(`<option value="${barangay}">${barangay}</option>`);
                         });
-                        if (typeof savedBarangay !== 'undefined' && savedBarangay) {
-                            barangaySelect.val(savedBarangay);
-                            savedBarangay = ''; // Clear the saved value after using it
-                        }
+                    if (savedBarangay) {
+                    barangaySelect.val(savedBarangay);
+                    savedBarangay = ''; // Clear the saved value after using it
+                }
 
-                        // Update permanent address after setting barangay
-                        updatePermanentAddress();
-                    }, 'json');
+                // Update permanent address after setting barangay
+                updatePermanentAddress();
+            }, 'json');
 
                     // Get postal code
                     $.get('personal_info.php', {
@@ -706,169 +664,182 @@ function generateProfileId($connection) {
                 }
             });
 
-            // Update permanent address when any address component changes
-            $('.address-component').on('change keyup', updatePermanentAddress);
+        // Update permanent address when any address component changes
+        $('.address-component').on('change keyup', updatePermanentAddress);
 
-            // Initial update of permanent address
-            updatePermanentAddress();
-        });
-
+        // Initial update of permanent address
+        updatePermanentAddress();
+    });
+        document.getElementById('contactNumber').addEventListener('keypress', function(e) {
+    // Allow only number inputs
+    var charCode = (e.which) ? e.which : e.keyCode;
+    if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+        e.preventDefault();
+    }
+});
         document.addEventListener('DOMContentLoaded', function() {
-            var yearSelect = document.getElementById('enrollmentYear');
-            var semesterSelect = document.getElementById('enrollmentSemester');
-            var hiddenInput = document.getElementById('semester');
-            var currentYear = new Date().getFullYear();
-            
-            for (var i = 0; i < 10; i++) {
-                var year = currentYear - i;
-                var option = document.createElement('option');
-                option.value = year + '-' + (year + 1);
-                option.textContent = year + '-' + (year + 1);
-                yearSelect.appendChild(option);
+    var yearSelect = document.getElementById('enrollmentYear');
+    var semesterSelect = document.getElementById('enrollmentSemester');
+    var hiddenInput = document.getElementById('semester');
+    var currentYear = new Date().getFullYear();
+    
+    for (var i = 0; i < 10; i++) {
+        var year = currentYear - i;
+        var option = document.createElement('option');
+        option.value = year + '-' + (year + 1);
+        option.textContent = year + '-' + (year + 1);
+        yearSelect.appendChild(option);
+    }
+
+    function updateHiddenInput() {
+        if (semesterSelect.value && yearSelect.value) {
+            hiddenInput.value = semesterSelect.value + ' Semester, ' + yearSelect.value;
+        } else {
+            hiddenInput.value = '';
+        }
+    }
+
+    semesterSelect.addEventListener('change', updateHiddenInput);
+    yearSelect.addEventListener('change', updateHiddenInput);
+
+    // For form submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!hiddenInput.value) {
+            e.preventDefault();
+            alert('Please select both semester and school year.');
+        }
+    });
+});
+        document.getElementById('sameAsPermAddress').addEventListener('change', function() {
+            var currentAddressInput = document.getElementById('currentAddress');
+            if (this.checked) {
+                currentAddressInput.value = document.getElementById('PermanentAddress').value;
+                currentAddressInput.disabled = true;
+            } else {
+                currentAddressInput.value = '';
+                currentAddressInput.disabled = false;
             }
-
-            function updateHiddenInput() {
-                if (semesterSelect.value && yearSelect.value) {
-                    hiddenInput.value = semesterSelect.value + ' Semester, ' + yearSelect.value;
-                } else {
-                    hiddenInput.value = '';
-                }
-            }
-
-            semesterSelect.addEventListener('change', updateHiddenInput);
-            yearSelect.addEventListener('change', updateHiddenInput);
-
-            // For form submission
-            document.querySelector('form').addEventListener('submit', function(e) {
-                if (!hiddenInput.value) {
-                    e.preventDefault();
-                    alert('Please select both semester and school year.');
-                }
-            });
-            
-            // Set up the same as permanent address checkbox
-            document.getElementById('sameAsPermAddress').addEventListener('change', function() {
-                var currentAddressInput = document.getElementById('currentAddress');
-                if (this.checked) {
-                    currentAddressInput.value = document.getElementById('PermanentAddress').value;
-                    currentAddressInput.disabled = true;
-                } else {
-                    currentAddressInput.value = '';
-                    currentAddressInput.disabled = false;
-                }
-            });
-
-            document.getElementById('PermanentAddress').addEventListener('input', function() {
-                var checkbox = document.getElementById('sameAsPermAddress');
-                var currentAddressInput = document.getElementById('currentAddress');
-                if (checkbox.checked) {
-                    currentAddressInput.value = this.value;
-                }
-            });
         });
 
-        $(document).ready(function() {
-            // Initialize savedBarangay variable if it doesn't exist yet
-            if (typeof savedBarangay === 'undefined') {
-                var savedBarangay = '';
+        document.getElementById('PermanentAddress').addEventListener('input', function() {
+            var checkbox = document.getElementById('sameAsPermAddress');
+            var currentAddressInput = document.getElementById('currentAddress');
+            if (checkbox.checked) {
+                currentAddressInput.value = this.value;
             }
+        });
+
+    $(document).ready(function() {
+    // Save form data to sessionStorage before form submission
+    $('#studentProfileForm').on('submit', function() {
+        const formData = {};
+        $(this).serializeArray().forEach(item => {
+            formData[item.name] = item.value;
+        });
+        
+        // Save special fields
+        formData.civilStatus = $('#civilStatus').val();
+        formData.religion = $('#religion').val();
+        if ($('#religion').val() === 'Other') {
+            formData.otherReligion = $('#otherReligion').val();
+        }
+        if ($('#civilStatus').val() === 'Married') {
+            formData.spouseName = $('#spouseName').val();
+            formData.spouseOccupation = $('#spouseOccupation').val();
+        }
+        formData.sameAsPermAddress = $('#sameAsPermAddress').is(':checked');
+        
+        // Store in sessionStorage
+        sessionStorage.setItem('studentProfileData', JSON.stringify(formData));
+    }); 
+
+    // Load form data from sessionStorage on page load
+    const loadSavedFormData = () => {
+        const savedData = sessionStorage.getItem('studentProfileData');
+        if (savedData) {
+            const formData = JSON.parse(savedData);
             
-            // Save form data to sessionStorage before form submission
-            $('#studentProfileForm').on('submit', function() {
-                const formData = {};
-                $(this).serializeArray().forEach(item => {
-                    formData[item.name] = item.value;
-                });
-                
-                // Save special fields
-                formData.civilStatus = $('#civilStatus').val();
-                formData.religion = $('#religion').val();
-                if ($('#religion').val() === 'Other') {
-                    formData.otherReligion = $('#otherReligion').val();
+            // Save the barangay value before triggering city change
+            savedBarangay = formData.barangay || '';
+
+            // Set all other form fields first
+            Object.keys(formData).forEach(key => {
+                const field = $(`[name="${key}"]`);
+                if (field.length && key !== 'barangay') {  // Skip barangay here
+                    field.val(formData[key]);
                 }
-                if ($('#civilStatus').val() === 'Married') {
-                    formData.spouseName = $('#spouseName').val();
-                    formData.spouseOccupation = $('#spouseOccupation').val();
-                }
-                formData.sameAsPermAddress = $('#sameAsPermAddress').is(':checked');
-                formData.barangay = $('#barangay').val();  // Explicitly save barangay
-                
-                // Store in sessionStorage
-                sessionStorage.setItem('studentProfileData', JSON.stringify(formData));
             });
 
-            // Load form data from sessionStorage on page load
-            const loadSavedFormData = () => {
-                const savedData = sessionStorage.getItem('studentProfileData');
-                if (savedData) {
-                    const formData = JSON.parse(savedData);
-                    
-                    // Save the barangay value before triggering city change
-                    savedBarangay = formData.barangay || '';
+            // Trigger city change to load barangays
+            if (formData.city) {
+                $('#city').trigger('change');
+            }
 
-                    // Set all other form fields first
-                    Object.keys(formData).forEach(key => {
-                        const field = $(`[name="${key}"]`);
-                        if (field.length && key !== 'barangay') {  // Skip barangay here
-                            field.val(formData[key]);
-                        }
-                    });
+            // Handle other special fields (existing code)
+            if (formData.religion === 'Other') {
+                $('#otherReligionField').show();
+                $('#otherReligion').val(formData.otherReligion);
+            }
 
-                    // Trigger city change to load barangays
-                    if (formData.city) {
-                        $('#city').trigger('change');
-                    }
+            if (formData.civilStatus === 'Married') {
+                $('#spouseInfoFields').show();
+                $('#spouseName').val(formData.spouseName);
+                $('#spouseOccupation').val(formData.spouseOccupation);
+            }
 
-                    // Handle other special fields (existing code)
-                    if (formData.religion === 'Other') {
-                        $('#otherReligionField').show();
-                        $('#otherReligion').val(formData.otherReligion);
-                    }
+            if (formData.sameAsPermAddress) {
+                $('#sameAsPermAddress').prop('checked', true);
+                $('#currentAddress').val(formData.PermanentAddress);
+                $('#currentAddress').prop('disabled', true);
+            }
 
-                    if (formData.civilStatus === 'Married') {
-                        $('#spouseInfoFields').show();
-                        $('#spouseName').val(formData.spouseName);
-                        $('#spouseOccupation').val(formData.spouseOccupation);
-                    }
+            // Handle enrollment info
+            if (formData.semester) {
+                const [semester, year] = formData.semester.split(', ');
+                $('#enrollmentSemester').val(semester.replace(' Semester', ''));
+                $('#enrollmentYear').val(year);
+            }
 
-                    if (formData.sameAsPermAddress) {
-                        $('#sameAsPermAddress').prop('checked', true);
-                        $('#currentAddress').val(formData.PermanentAddress);
-                        $('#currentAddress').prop('disabled', true);
-                    }
+            // Trigger other change events
+            $('#religion').trigger('change');
+            $('#civilStatus').trigger('change');
+        }
+    };
 
-                    // Handle enrollment info
-                    if (formData.semester) {
-                        const [semester, year] = formData.semester.split(', ');
-                        $('#enrollmentSemester').val(semester.replace(' Semester', ''));
-                        $('#enrollmentYear').val(year);
-                    }
+    // Save form data to sessionStorage before form submission
+    $('#studentProfileForm').on('submit', function() {
+        const formData = {};
+        $(this).serializeArray().forEach(item => {
+            formData[item.name] = item.value;
+        });
+        
+        // Add special fields
+        formData.civilStatus = $('#civilStatus').val();
+        formData.religion = $('#religion').val();
+        if ($('#religion').val() === 'Other') {
+            formData.otherReligion = $('#otherReligion').val();
+        }
+        if ($('#civilStatus').val() === 'Married') {
+            formData.spouseName = $('#spouseName').val();
+            formData.spouseOccupation = $('#spouseOccupation').val();
+        }
+        formData.sameAsPermAddress = $('#sameAsPermAddress').is(':checked');
+        formData.barangay = $('#barangay').val();  // Explicitly save barangay
+        
+        // Store in sessionStorage
+        sessionStorage.setItem('studentProfileData', JSON.stringify(formData));
+    });
 
-                    // Format contact number if it exists
-                    if (formData.contactNumber) {
-                        const contactInput = document.getElementById('contactNumber');
-                        if (contactInput) {
-                            contactInput.value = formData.contactNumber;
-                            formatPhoneNumber(contactInput);
-                        }
-                    }
+    // Load saved data when page loads
+    loadSavedFormData();
 
-                    // Trigger other change events
-                    $('#religion').trigger('change');
-                    $('#civilStatus').trigger('change');
-                }
-            };
-
-            // Load saved data when page loads
+    // Add event listener for browser back/forward navigation
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
             loadSavedFormData();
-
-            // Add event listener for browser back/forward navigation
-            window.addEventListener('pageshow', function(event) {
-                if (event.persisted) {
-                    loadSavedFormData();
-                }
-            });
-        });
+        }
+    });
+});
     </script>
 </body>
 </html>
