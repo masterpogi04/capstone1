@@ -409,13 +409,13 @@ function generateProfileId($connection) {
                 </div>
                 <div class="form-row">
                    <div class="form-group col-md-6">
-                    <label for="contactNumber">Contact Number: *</label>
-                    <input type="tel" class="form-control" id="contactNumber" name="contactNumber"  
-                           required placeholder="e.g 09123456789" pattern="[0-9]{11}" maxlength="11" 
-                           title="Please enter a valid 11-digit phone number" 
-                           oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);" value="<?php echo htmlspecialchars($formData['fieldName'] ?? ''); ?>">
-                    <small class="form-text text-muted">Please enter an 11-digit phone number.</small>
-                </div>
+                        <label for="contactNumber">Contact Number: *</label>
+                        <input type="tel" class="form-control" id="contactNumber" name="contactNumber"  
+                            required placeholder="e.g 09123456789" 
+                            title="Please enter a valid 11-digit phone number starting with 09" 
+                            value="<?php echo htmlspecialchars($formData['fieldName'] ?? ''); ?>">
+                        <small class="form-text text-muted">Please enter an 11-digit phone number starting with 09.</small>
+                    </div>
                     <div class="form-group col-md-6">
                         <label for="email">Email Address:</label>
                         <input type="email" class="form-control" id="email" name="email" value="<?php echo $student['email'] ?? ''; ?>" readonly>
@@ -550,7 +550,31 @@ function generateProfileId($connection) {
     </div>
 
     <script>
+        function formatPhoneNumber(input) {
+        // Remove non-digit characters
+        let value = input.value.replace(/\D/g, '');
+        
+        // Ensure it starts with '09'
+        if (!value.startsWith('09') && value.length > 0) {
+            if (value.startsWith('9')) {
+                value = '0' + value;
+            } else {
+                value = '09';
+            }
+        }
+        
+        // Limit to 11 digits
+        if (value.length > 11) {
+            value = value.substring(0, 11);
+        }
+        
+        // Update the input value
+        input.value = value;
+    }
         $(document).ready(function() {
+            document.getElementById('contactNumber').addEventListener('input', function(e) {
+            formatPhoneNumber(this);
+        });
             const birthdateInput = document.getElementById('birthdate');
             const today = new Date();
             const tenYearsAgo = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate());
